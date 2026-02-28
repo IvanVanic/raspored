@@ -1,0 +1,209 @@
+{
+  "meta": {
+    "title": "Osobni raspored sati",
+    "program": "Sveučilišni prijediplomski studij Informatika",
+    "faculty": "Fakultet informatike i digitalnih tehnologija (FIDIT), Rijeka",
+    "year": "2025./2026.",
+    "semester": "Ljetni (Semestar II + IV kombinirano)",
+    "student_context": "Student ponavlja neke predmete iz 1. godine (sem. II) dok istovremeno pohađa predmete 2. godine (sem. IV). Raspored je osobni i optimiziran prema obavezama i clash analizi.",
+    "generated": "2026-02-28"
+  },
+
+  "status_definitions": {
+    "M": "Obvezno pohađanje (mandatory attendance). Student MORA pohađati nastavu. Prikazuje se uvijek.",
+    "E": "Upisan ali fleksibilno (enrolled, flexible). Student je upisan ali pohađanje nije obavezno osim za ispite/kolokvije. Može se filtrirati/sakriti."
+  },
+
+  "type_definitions": {
+    "P": "Predavanje (lecture). Jedan slot tjedno za sve studente, nema grupa.",
+    "V": "Vježbe (exercises/lab). Više grupa (G1, G2, G3) — student pohađa jednu grupu."
+  },
+
+  "subjects": [
+    {
+      "id": "os",
+      "full_name": "Operacijski sustavi",
+      "short_name": "Op. sustavi",
+      "semester": "II",
+      "status": "M",
+      "slots": [
+        { "day": "Ponedjeljak", "start": "10:00", "end": "11:30", "type": "P", "group": null, "prof": "Kovačić", "room": "028" },
+        { "day": "Srijeda", "start": "10:00", "end": "11:30", "type": "V", "group": "G1", "prof": "Slavuj", "room": "366" },
+        { "day": "Srijeda", "start": "12:00", "end": "13:30", "type": "V", "group": "G2", "prof": "Slavuj", "room": "366" },
+        { "day": "Srijeda", "start": "14:00", "end": "15:30", "type": "V", "group": "G3", "prof": "Petrović M.", "room": "366" }
+      ],
+      "assigned_group": "G3",
+      "group_reason": "Student radi u kafiću ujutro (6-13), G3 u 14:00 mu odgovara jer stigne nakon posla.",
+      "active_slots_summary": "P Pon 10:00 + V G3 Sri 14:00"
+    },
+    {
+      "id": "mat2",
+      "full_name": "Matematika 2",
+      "short_name": "Mat. 2",
+      "semester": "II",
+      "status": "E",
+      "slots": [
+        { "day": "Ponedjeljak", "start": "12:00", "end": "13:30", "type": "P", "group": null, "prof": "Ban Martinović", "room": "028" },
+        { "day": "Ponedjeljak", "start": "14:00", "end": "15:30", "type": "V", "group": "G1", "prof": "Špac", "room": "028" },
+        { "day": "Ponedjeljak", "start": "16:00", "end": "17:30", "type": "V", "group": "G2", "prof": "Zubović Žutolija", "room": "028" }
+      ],
+      "assigned_group": "G2",
+      "group_reason": "G1 (14:00) clasha s UPW V G3 (14:00) koji je M. G2 (16:00) nema clash.",
+      "active_slots_summary": "P Pon 12:00 + V G2 Pon 16:00",
+      "notes": "Ponavlja predmet. Matematiku ne treba predavanja da nauči — samo ispiti bitni."
+    },
+    {
+      "id": "modpod",
+      "full_name": "Modeliranje podataka",
+      "short_name": "Mod. podataka",
+      "semester": "II",
+      "status": "M",
+      "slots": [
+        { "day": "Četvrtak", "start": "12:00", "end": "13:30", "type": "P", "group": null, "prof": "Ašenbrener Katić", "room": "028" },
+        { "day": "Petak", "start": "10:00", "end": "11:30", "type": "V", "group": "G1", "prof": "Ašenbrener Katić", "room": "028" },
+        { "day": "Petak", "start": "12:00", "end": "13:30", "type": "V", "group": "G2", "prof": "Franković Lučić", "room": "028" }
+      ],
+      "assigned_group": "G2",
+      "group_reason": "G1 (Pet 10:00) clasha s OI P (Pet 10:00) koji je M. Mora G2.",
+      "active_slots_summary": "P Čet 12:00 + V G2 Pet 12:00"
+    },
+    {
+      "id": "ovis",
+      "full_name": "Osnove vjerojatnosti i statistike",
+      "short_name": "Osn. vjeroj. i stat.",
+      "semester": "II",
+      "status": "M",
+      "slots": [
+        { "day": "Utorak", "start": "12:00", "end": "13:30", "type": "P", "group": null, "prof": "Maksimović", "room": "028" },
+        { "day": "Utorak", "start": "16:00", "end": "17:30", "type": "V", "group": "G1", "prof": "Zubović Žutolija", "room": "028" },
+        { "day": "Utorak", "start": "18:00", "end": "19:30", "type": "V", "group": "G2", "prof": "Zubović Žutolija", "room": "028" }
+      ],
+      "assigned_group": "G2",
+      "group_reason": "Student je u G2 (18:00-19:30).",
+      "active_slots_summary": "P Uto 12:00 + V G2 Uto 18:00"
+    },
+    {
+      "id": "uasp",
+      "full_name": "Uvod u algoritme i strukture podataka",
+      "short_name": "Uvod u alg. i struk. pod.",
+      "semester": "II",
+      "status": "E",
+      "slots": [
+        { "day": "Srijeda", "start": "08:15", "end": "09:45", "type": "P", "group": null, "prof": "Matetić / Brkić Bakarić", "room": "028" },
+        { "day": "Srijeda", "start": "10:00", "end": "11:30", "type": "V", "group": "G1", "prof": "Ljubobratović", "room": "350" },
+        { "day": "Srijeda", "start": "12:00", "end": "13:30", "type": "V", "group": "G2", "prof": "Ljubobratović", "room": "350" },
+        { "day": "Srijeda", "start": "14:00", "end": "15:30", "type": "V", "group": "G3", "prof": "Ljubobratović", "room": "350" }
+      ],
+      "assigned_group": null,
+      "group_reason": "G3 clasha s OS V G3 (oba Sri 14:00). G1 ili G2 ovisi o tome radi li ujutro taj dan. TBD.",
+      "active_slots_summary": "P Sri 08:15 + V G1 ili G2 Sri (TBD)",
+      "notes": "Pohađanje nije obavezno. Vježbe samo kad ne radi ujutro."
+    },
+    {
+      "id": "aor",
+      "full_name": "Arhitektura i organizacija računala",
+      "short_name": "Arh. i org. rač.",
+      "semester": "II",
+      "status": "E",
+      "slots": [
+        { "day": "Četvrtak", "start": "10:00", "end": "11:30", "type": "P", "group": null, "prof": "Ipšić", "room": "028" },
+        { "day": "Četvrtak", "start": "12:00", "end": "13:30", "type": "V", "group": "G1", "prof": "Ljubobratović", "room": "S32" },
+        { "day": "Četvrtak", "start": "14:00", "end": "15:30", "type": "V", "group": "G2", "prof": "Ljubobratović", "room": "S32" }
+      ],
+      "assigned_group": "G2",
+      "group_reason": "G1 (12:00) clasha s ModPod P (Čet 12:00) koji je M. G2 (14:00) slobodan.",
+      "active_slots_summary": "P Čet 10:00 + V G2 Čet 14:00",
+      "notes": "Predavanja i vježbe potpuno neobavezni. Možda pohađa tjedan pred ispite."
+    },
+    {
+      "id": "oi",
+      "full_name": "Operacijska istraživanja",
+      "short_name": "Op. istraživanja",
+      "semester": "IV",
+      "status": "M",
+      "slots": [
+        { "day": "Petak", "start": "10:00", "end": "11:30", "type": "P", "group": null, "prof": "Holenko Dlab", "room": "S32" },
+        { "day": "Utorak", "start": "12:00", "end": "13:30", "type": "V", "group": "G1", "prof": "Franković Lučić", "room": "359" },
+        { "day": "Utorak", "start": "14:00", "end": "15:30", "type": "V", "group": "G2", "prof": "Franković Lučić", "room": "359" }
+      ],
+      "assigned_group": "G2",
+      "group_reason": "G1 (Uto 12:00) clasha s OVIS P (Uto 12:00) koji je M. Mora G2 (14:00).",
+      "active_slots_summary": "P Pet 10:00 + V G2 Uto 14:00"
+    },
+    {
+      "id": "upw",
+      "full_name": "Uvod u programiranje za web",
+      "short_name": "Prog. za web",
+      "semester": "IV",
+      "status": "M",
+      "slots": [
+        { "day": "Utorak", "start": "10:00", "end": "11:30", "type": "P", "group": null, "prof": "Načinović Prskalo", "room": "028" },
+        { "day": "Ponedjeljak", "start": "10:00", "end": "11:30", "type": "V", "group": "G1", "prof": "Vrsalović", "room": "350" },
+        { "day": "Ponedjeljak", "start": "12:00", "end": "13:30", "type": "V", "group": "G2", "prof": "Vrsalović", "room": "350" },
+        { "day": "Ponedjeljak", "start": "14:00", "end": "15:30", "type": "V", "group": "G3", "prof": "Vrsalović", "room": "350" }
+      ],
+      "assigned_group": "G3",
+      "group_reason": "G1 (Pon 10:00) clasha s OS P (Pon 10:00), oba M — hard clash. G2 (12:00) clasha s Mat2 P (soft, Mat2 je E). G3 (14:00) clasha s Mat2 V G1 (soft). Odabran G3 jer Mat2 je fleksibilan → Mat2 V prebačen na G2 (16:00).",
+      "active_slots_summary": "P Uto 10:00 + V G3 Pon 14:00",
+      "notes": "Novi predmet. Mnogo vježbi je online prema DINP-u. 3 projektna zadatka, 1 kolokvij, seminarski rad. Treba 35/70 bodova iz kontinuiranog rada za pristup ispitu."
+    }
+  ],
+
+  "personal_schedule": {
+    "_comment": "Ovo je finalni raspored — samo slotovi koje student zapravo pohađa, nakon clash analize i odabira grupa.",
+    "Ponedjeljak": [
+      { "subject_id": "os",    "start": "10:00", "end": "11:30", "type": "P", "group": null, "prof": "Kovačić",           "room": "028", "status": "M" },
+      { "subject_id": "mat2",  "start": "12:00", "end": "13:30", "type": "P", "group": null, "prof": "Ban Martinović",     "room": "028", "status": "E" },
+      { "subject_id": "upw",   "start": "14:00", "end": "15:30", "type": "V", "group": "G3", "prof": "Vrsalović",          "room": "350", "status": "M" },
+      { "subject_id": "mat2",  "start": "16:00", "end": "17:30", "type": "V", "group": "G2", "prof": "Zubović Žutolija",   "room": "028", "status": "E" }
+    ],
+    "Utorak": [
+      { "subject_id": "upw",   "start": "10:00", "end": "11:30", "type": "P", "group": null, "prof": "Načinović Prskalo",  "room": "028", "status": "M" },
+      { "subject_id": "ovis",  "start": "12:00", "end": "13:30", "type": "P", "group": null, "prof": "Maksimović",         "room": "028", "status": "M" },
+      { "subject_id": "oi",    "start": "14:00", "end": "15:30", "type": "V", "group": "G2", "prof": "Franković Lučić",    "room": "359", "status": "M" },
+      { "subject_id": "ovis",  "start": "18:00", "end": "19:30", "type": "V", "group": "G2", "prof": "Zubović Žutolija",   "room": "028", "status": "M" }
+    ],
+    "Srijeda": [
+      { "subject_id": "uasp",  "start": "08:15", "end": "09:45", "type": "P", "group": null,    "prof": "Matetić / Brkić Bakarić", "room": "028", "status": "E" },
+      { "subject_id": "uasp",  "start": "10:00", "end": "11:30", "type": "V", "group": "G1/G2", "prof": "Ljubobratović",           "room": "350", "status": "E", "note": "Grupa TBD" },
+      { "subject_id": "os",    "start": "14:00", "end": "15:30", "type": "V", "group": "G3",    "prof": "Petrović M.",              "room": "366", "status": "M" }
+    ],
+    "Četvrtak": [
+      { "subject_id": "aor",    "start": "10:00", "end": "11:30", "type": "P", "group": null, "prof": "Ipšić",            "room": "028", "status": "E" },
+      { "subject_id": "modpod", "start": "12:00", "end": "13:30", "type": "P", "group": null, "prof": "Ašenbrener Katić", "room": "028", "status": "M" },
+      { "subject_id": "aor",    "start": "14:00", "end": "15:30", "type": "V", "group": "G2", "prof": "Ljubobratović",    "room": "S32", "status": "E" }
+    ],
+    "Petak": [
+      { "subject_id": "oi",     "start": "10:00", "end": "11:30", "type": "P", "group": null, "prof": "Holenko Dlab",      "room": "S32", "status": "M" },
+      { "subject_id": "modpod", "start": "12:00", "end": "13:30", "type": "V", "group": "G2", "prof": "Franković Lučić",   "room": "028", "status": "M" }
+    ]
+  },
+
+  "clashes_resolved": [
+    { "description": "OI V G1 (Uto 12:00) vs OVIS P (Uto 12:00) — oba M", "resolution": "OI prebačen na G2 (14:00)" },
+    { "description": "ModPod V G1 (Pet 10:00) vs OI P (Pet 10:00) — oba M", "resolution": "ModPod prebačen na G2 (12:00)" },
+    { "description": "UPW V G1 (Pon 10:00) vs OS P (Pon 10:00) — oba M", "resolution": "UPW prebačen na G3 (14:00), Mat2 V na G2 (16:00)" },
+    { "description": "AOR V G1 (Čet 12:00) vs ModPod P (Čet 12:00) — E vs M", "resolution": "AOR prebačen na G2 (14:00)" },
+    { "description": "UASP V G3 (Sri 14:00) vs OS V G3 (Sri 14:00) — E vs M", "resolution": "UASP ostaje na G1 ili G2 (TBD)" }
+  ],
+
+  "day_time_slots": [
+    { "start": "08:15", "end": "09:45" },
+    { "start": "10:00", "end": "11:30" },
+    { "start": "12:00", "end": "13:30" },
+    { "start": "14:00", "end": "15:30" },
+    { "start": "16:00", "end": "17:30" },
+    { "start": "18:00", "end": "19:30" }
+  ],
+
+  "days_order": ["Ponedjeljak", "Utorak", "Srijeda", "Četvrtak", "Petak"],
+
+  "display_notes": [
+    "Utorak je najteži dan: 10:00–15:30 pa pauza pa 18:00–19:30",
+    "Srijeda: ako radi u kafiću 6–13, stiže samo na OS V G3 (14:00)",
+    "UPW vježbe su često online prema DINP-u — ne mora uvijek fizički dolaziti",
+    "UASP V grupa još TBD — ovisi o radnom rasporedu",
+    "AOR predavanja i vježbe potpuno neobavezni — dolazi po potrebi",
+    "Mat2 ponavlja — samo ispiti bitni"
+  ]
+}
