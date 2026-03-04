@@ -7,7 +7,7 @@ export const SEMESTER_START = "2026-03-02" as const;
 
 const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const TOTAL_WEEKS = 15;
+export const TOTAL_WEEKS = 15;
 
 // Croatian day names in schedule order (index 0 = Monday, index 4 = Friday)
 const CROATIAN_DAY_NAMES: readonly string[] = [
@@ -106,25 +106,3 @@ export function daysUntil(date: Date): number {
   return Math.round((targetMidnight.getTime() - todayMidnight.getTime()) / MS_PER_DAY);
 }
 
-/**
- * Returns true if the given Croatian day name (e.g. "Ponedjeljak") matches today.
- * Uses the days_order convention: index 0 (Monday) → JS getDay() 1.
- */
-export function isToday(dayName: string): boolean {
-  const jsDay = new Date().getDay(); // 0=Sun, 1=Mon … 6=Sat
-  const scheduleIndex = CROATIAN_DAY_NAMES.indexOf(dayName);
-  if (scheduleIndex === -1) return false;
-  // scheduleIndex 0 = Monday = jsDay 1 … scheduleIndex 4 = Friday = jsDay 5
-  return jsDay === scheduleIndex + 1;
-}
-
-/**
- * Returns true if the given Croatian day name matches tomorrow.
- */
-export function isTomorrow(dayName: string): boolean {
-  const jsDay = new Date().getDay();
-  const scheduleIndex = CROATIAN_DAY_NAMES.indexOf(dayName);
-  if (scheduleIndex === -1) return false;
-  const tomorrowJsDay = (jsDay + 1) % 7;
-  return tomorrowJsDay === scheduleIndex + 1;
-}

@@ -5,9 +5,9 @@
   --background:    #131210;
   --foreground:    #eeebe5;
   --border:        #272420;
-  --border-subtle: #1f1d1b;
+  --border-subtle: #252320;
   --muted:         #1c1a17;
-  --muted-fg:      #8a8680;
+  --muted-fg:      #9e9a94;
   --card:          #1f1d1a;
   --card-hover:    #242220;
 
@@ -141,7 +141,7 @@ body {
   top: 0;
   left: 0;
   bottom: 0;
-  width: 2px;
+  width: 3px;
 }
 
 .slot-card-m { background: var(--m-tint); }
@@ -171,7 +171,7 @@ body {
   align-items: center;
   padding: 1px 5px;
   border-radius: 3px;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--background);
@@ -183,12 +183,6 @@ body {
 .slot-cell {
   padding: 8px 10px;
   min-height: 52px;
-}
-
-/* ── Segment control ──────────────────────────────────────────── */
-.segment-active {
-  background: var(--card);
-  box-shadow: var(--shadow-card);
 }
 
 /* ── Day tab ──────────────────────────────────────────────────── */
@@ -220,11 +214,6 @@ body {
   transition-timing-function: var(--ease-out-expo);
 }
 
-.t-slow {
-  transition-duration: var(--duration-slow);
-  transition-timing-function: var(--ease-out-expo);
-}
-
 /* ── Week badge ───────────────────────────────────────────────── */
 .week-badge {
   display: inline-flex;
@@ -237,12 +226,6 @@ body {
   background: color-mix(in srgb, var(--m-accent) 15%, transparent);
   color: var(--m-text);
   font-variant-numeric: tabular-nums;
-}
-
-/* ── Data values ──────────────────────────────────────────────── */
-.data-value {
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
 }
 
 /* ── Modal ────────────────────────────────────────────────────── */
@@ -299,4 +282,144 @@ body {
 @keyframes sheet-up {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
+}
+
+/* ── Slot card responsive shadows ────────────────────────────── */
+@media (max-width: 767px) {
+  .slot-card-m, .slot-card-e {
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.04);
+  }
+}
+@media (min-width: 768px) {
+  .slot-card-m, .slot-card-e {
+    box-shadow: var(--shadow-card);
+  }
+}
+
+/* ── Instrument value ────────────────────────────────────────── */
+.instrument-value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+/* ── Slot pulse (active class glow) ──────────────────────────── */
+@keyframes slot-pulse {
+  0%, 100% { box-shadow: inset 0 0 0 1px var(--m-accent), 0 0 8px 0 rgb(82 148 92 / 0.15); }
+  50%      { box-shadow: inset 0 0 0 1px var(--m-accent), 0 0 16px 0 rgb(82 148 92 / 0.25); }
+}
+.slot-now {
+  animation: slot-pulse 3s ease-in-out infinite;
+}
+
+/* ── Row entrance ────────────────────────────────────────────── */
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Timeline strip + week ───────────────────────────────────── */
+.timeline-strip {
+  display: flex;
+  width: 100%;
+  background: color-mix(in srgb, var(--muted) 50%, var(--background));
+  height: 40px;
+}
+
+.timeline-week {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* ── Bottom tab bar ──────────────────────────────────────────── */
+.bottom-tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  background: var(--background);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.bottom-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 0 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--muted-fg);
+  transition: color var(--duration-quick) var(--ease-out-expo);
+}
+.bottom-tab[data-active="true"] {
+  color: var(--foreground);
+}
+
+/* ── Filter chips ────────────────────────────────────────────── */
+.filter-chip-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 16px;
+}
+.filter-chip-strip::-webkit-scrollbar { display: none; }
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted-fg);
+  cursor: pointer;
+  transition: all var(--duration-quick) var(--ease-out-expo);
+}
+.filter-chip[data-active="true"] {
+  background: var(--card);
+  color: var(--foreground);
+  border-color: var(--foreground);
+}
+
+/* ── Null state ──────────────────────────────────────────────── */
+.null-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 16px;
+  color: var(--muted-fg);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ── Urgency dot ─────────────────────────────────────────────── */
+.urgency-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }

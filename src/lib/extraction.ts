@@ -3,7 +3,7 @@
  * from curriculum data. Pure module: no React, no side effects.
  */
 
-import type { CurriculumEntry, CriticalDate, UrgencyLevel } from "@/data/types";
+import type { CurriculumEntry, CriticalDate, UrgencyLevel, EventType } from "@/data/types";
 import { parseHrDate, getWeekForDate, daysUntil } from "./date-utils";
 
 // ---------------------------------------------------------------------------
@@ -38,17 +38,24 @@ const KVIZ_RE = /\bkviz\b/i;
  */
 const ISPIT_RE = /\bispit\b/i;
 
+const LABORATORIJ_RE = /\blaboratorij\b/i;
+const PREDAJA_RE = /\bpredaj[ae]\b/i;
+const ZADAVANJE_RE = /\bzadavanj[ae]\b/i;
+const DOMACA_ZADACA_RE = /\bdomać[ae]\s+zadać[ae]\b/i;
+
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
-
-type EventType = CriticalDate["type"];
 
 function classifyText(text: string): EventType | null {
   if (KOLOKVIJ_RE.test(text)) return "kolokvij";
   if (OBRANA_RE.test(text)) return "obrana";
   if (KVIZ_RE.test(text)) return "kviz";
   if (ISPIT_RE.test(text)) return "ispit";
+  if (LABORATORIJ_RE.test(text)) return "laboratorij";
+  if (PREDAJA_RE.test(text)) return "predaja";
+  if (ZADAVANJE_RE.test(text)) return "zadavanje";
+  if (DOMACA_ZADACA_RE.test(text)) return "domaca_zadaca";
   return null;
 }
 

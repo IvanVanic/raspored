@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import type { Slot } from "@/data/types";
 import { data } from "@/data/schedule";
 import { curriculum } from "@/data/curriculum";
+import { getCurrentWeek } from "@/lib/date-utils";
 import { getSubjectUrgencies } from "@/lib/extraction";
 import { SlotCard } from "./SlotCard";
 import type { TimeStatus } from "./SlotCard";
@@ -38,6 +39,15 @@ function getTimeStatuses(slots: Slot[], isToday: boolean): TimeStatus[] {
   });
 }
 
+/** Returns the topic string for a slot based on current week and slot type. */
+function getSlotTopic(subjectId: string, slotType: "P" | "V", currentWeek: number): string | undefined {
+  const curr = curriculum[subjectId];
+  if (!curr) return undefined;
+  const weekData = curr.weeks[currentWeek - 1];
+  if (!weekData) return undefined;
+  return slotType === "P" ? weekData.lecture : weekData.exercise;
+}
+
 export function DayView({
   dayIdx,
   setDayIdx,
@@ -49,6 +59,7 @@ export function DayView({
 }) {
   const dayName = data.days_order[dayIdx];
   const slots = data.personal_schedule[dayName] ?? [];
+  const currentWeek = getCurrentWeek();
 
   const urgencies = useMemo(() => getSubjectUrgencies(curriculum), []);
 
@@ -56,8 +67,28 @@ export function DayView({
   const todayIdx = jsDay >= 1 && jsDay <= 5 ? jsDay - 1 : -1;
   const timeStatuses = getTimeStatuses(slots, dayIdx === todayIdx);
 
+  // Swipe handling
+  const touchStartX = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(dx) < 40) return;
+    if (dx < 0 && dayIdx < data.days_order.length - 1) {
+      setDayIdx(dayIdx + 1);
+    } else if (dx > 0 && dayIdx > 0) {
+      setDayIdx(dayIdx - 1);
+    }
+  };
+
   return (
     <div>
+      {/* Day tabs */}
       <div className="flex border-b border-border">
         {data.days_order.map((day, i) => (
           <button
@@ -75,34 +106,43 @@ export function DayView({
         ))}
       </div>
 
-      <div className="px-4 pt-3 pb-4">
+      {/* Swipeable content */}
+      <div
+        className="px-4 pt-3 pb-4"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {slots.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-muted-fg text-sm">Nema nastave</p>
+          <div className="null-state">
+            <p>Nema nastave</p>
           </div>
         ) : (
           <div className="space-y-1.5">
-            {slots.map((slot, i) => (
-              <div key={`${dayIdx}-${i}`} className="flex gap-0">
-                <div className="w-14 shrink-0 pt-2.5 pr-3 text-right border-r border-border-subtle">
-                  <div className="text-[11px] font-semibold text-foreground tabular-nums leading-none">
-                    {slot.start}
+            {slots.map((slot, i) => {
+              const topic = getSlotTopic(slot.subject_id, slot.type as "P" | "V", currentWeek);
+              return (
+                <div key={`${dayIdx}-${i}`} className="flex gap-0">
+                  <div className="w-14 shrink-0 pt-2.5 pr-3 text-right border-r border-border-subtle">
+                    <div className="text-[11px] font-semibold text-foreground tabular-nums leading-none">
+                      {slot.start}
+                    </div>
+                    <div className="text-[10px] text-muted-fg/50 tabular-nums leading-none mt-1">
+                      {slot.end}
+                    </div>
                   </div>
-                  <div className="text-[10px] text-muted-fg/50 tabular-nums leading-none mt-1">
-                    {slot.end}
+                  <div className="flex-1 pl-2">
+                    <SlotCard
+                      slot={slot}
+                      showProf
+                      onClick={() => onSlotClick(slot)}
+                      urgency={urgencies.get(slot.subject_id)}
+                      timeStatus={timeStatuses[i]}
+                      topic={topic}
+                    />
                   </div>
                 </div>
-                <div className="flex-1 pl-2">
-                  <SlotCard
-                    slot={slot}
-                    showProf
-                    onClick={() => onSlotClick(slot)}
-                    urgency={urgencies.get(slot.subject_id)}
-                    timeStatus={timeStatuses[i]}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

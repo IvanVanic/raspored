@@ -1,20 +1,5 @@
 import type { CurriculumEntry, WeekTopic, GradingInfo } from "./types";
 
-export const SEMESTER_START = "2026-03-02" as const;
-
-/**
- * Returns the current teaching week (1-15), clamped to the valid range.
- * Week 1 begins on SEMESTER_START (Monday, 2026-03-02).
- */
-export function getCurrentWeek(): number {
-  const start = new Date(SEMESTER_START);
-  const now = new Date();
-  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
-  const elapsed = now.getTime() - start.getTime();
-  const week = Math.floor(elapsed / msPerWeek) + 1;
-  return Math.min(Math.max(week, 1), 15);
-}
-
 // ---------------------------------------------------------------------------
 // Helper type alias kept local — the satisfies operator validates the shape
 // against CurriculumEntry at each declaration site.
@@ -69,11 +54,11 @@ const mat2 = {
     { lecture: "Krivuljni integrali",                   exercise: "Krivuljni integral 1. i 2. vrste" },
     { lecture: "Plošni integrali",                      exercise: "Plošni integral — primjeri" },
     { lecture: "Diferencijalne jednadžbe 1. reda",      exercise: "Separabilne i linearne DJ" },
-    { lecture: "1. kolokvij",                           exercise: "1. kolokvij" },
+    { lecture: "1. kolokvij (27.04.2026.)",              exercise: "1. kolokvij" },
     { lecture: "Diferencijalne jednadžbe 2. reda",      exercise: "Linearni sustavi DJ" },
     { lecture: "Laplaceova transformacija",             exercise: "Primjena Laplaceove transformacije" },
     { lecture: "Fourierovi redovi",                     exercise: "Razvoj u Fourierov red" },
-    { lecture: "2. kolokvij",                           exercise: "2. kolokvij" },
+    { lecture: "2. kolokvij (25.05.2026.)",              exercise: "2. kolokvij" },
     { lecture: "Numeričke metode",                      exercise: "Numerička integracija i DJ" },
     { lecture: "Ponavljanje i priprema za ispit",       exercise: "Rješavanje zadataka s prošlih ispita" },
   ]),
@@ -123,12 +108,12 @@ const ovis = {
     { lecture: "Diskretne distribucije",                exercise: "Binomna i Poissonova distribucija" },
     { lecture: "Neprekidne distribucije",               exercise: "Normalna i eksponencijalna distribucija" },
     { lecture: "Matematičko očekivanje i varijanca",    exercise: "Računanje karakteristika distribucija" },
-    { lecture: "1. kolokvij",                           exercise: "1. kolokvij" },
+    { lecture: "1. kolokvij (21.04.2026.)",              exercise: "1. kolokvij" },
     { lecture: "Uzorak i procjena parametara",          exercise: "Točkasta i intervalna procjena" },
     { lecture: "Intervali pouzdanosti",                 exercise: "Konstrukcija intervala pouzdanosti" },
     { lecture: "Testiranje statističkih hipoteza",      exercise: "Z-test i t-test" },
     { lecture: "Hi-kvadrat test",                       exercise: "Test homogenosti i neovisnosti" },
-    { lecture: "2. kolokvij",                           exercise: "2. kolokvij" },
+    { lecture: "2. kolokvij (26.05.2026.)",              exercise: "2. kolokvij" },
     { lecture: "Regresija i korelacija",                exercise: "Linearna regresija — primjeri" },
     { lecture: "Ponavljanje i priprema za ispit",       exercise: "Rješavanje zadataka s prošlih ispita" },
   ]),
@@ -149,8 +134,8 @@ const uasp = {
     { lecture: "Stogovi i redovi",                      exercise: "Implementacija stoga i reda" },
     { lecture: "Povezane liste",                        exercise: "Jednostruko i dvostruko povezane liste" },
     { lecture: "Stabla i BST",                          exercise: "Binarno stablo i operacije" },
-    { lecture: "1. kolokvij",                           exercise: "1. kolokvij" },
-    { lecture: "Kviz",                                  exercise: "Kviz" },
+    { lecture: "1. kolokvij (15.04.2026.)",              exercise: "1. kolokvij" },
+    { lecture: "Kviz (22.04.2026.)",                    exercise: "Kviz" },
     { lecture: "Grafovi — osnove",                      exercise: "Reprezentacija grafova" },
     { lecture: "Grafovi — obilazak",                    exercise: "BFS i DFS obilazak" },
     { lecture: "Hash tablice",                          exercise: "Implementacija hash tablice" },
@@ -177,12 +162,12 @@ const aor = {
     { lecture: "Booleova algebra i logički sklopovi",   exercise: "Minimizacija logičkih funkcija" },
     { lecture: "Kombinacijski sklopovi",                exercise: "Multipleksori, dekoderi, zbrojnici" },
     { lecture: "Sekvencijalni sklopovi",                exercise: "Bistabili, registri, brojači" },
-    { lecture: "Kviz",                                  exercise: "Kviz" },
+    { lecture: "Kviz (09.04.2026.)",                     exercise: "Kviz" },
     { lecture: "Mikrooperacije i putovi podataka",      exercise: "RTL opis mikrooperacija" },
     { lecture: "Organizacija procesora",                exercise: "Jednoadresni i višeadresni procesori" },
     { lecture: "Skup instrukcija (ISA)",                exercise: "Analiza RISC i CISC arhitektura" },
     { lecture: "Cjevovod (pipeline)",                   exercise: "Hazardi i prosljeđivanje podataka" },
-    { lecture: "Praktični kolokvij",                    exercise: "Praktični kolokvij" },
+    { lecture: "Praktični kolokvij (14.05.2026.)",       exercise: "Praktični kolokvij" },
     { lecture: "Memorijski sustav",                     exercise: "Hijerarhija memorije" },
     { lecture: "Cache memorija",                        exercise: "Strategije zamjene i pisanja u cache" },
     { lecture: "Ulazno-izlazni sustav",                 exercise: "Sabirnice i upravljanje U/I" },

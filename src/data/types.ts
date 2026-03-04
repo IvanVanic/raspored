@@ -77,9 +77,11 @@ export interface CriticalDate {
   label: string;
   date: Date | null;
   week: number;
-  type: "kolokvij" | "obrana" | "kviz" | "ispit";
+  type: "kolokvij" | "obrana" | "kviz" | "ispit" | "laboratorij" | "predaja" | "zadavanje" | "domaca_zadaca";
   urgency: UrgencyLevel;
 }
+
+export type EventType = CriticalDate["type"];
 
 export interface TemporalContext {
   currentWeek: number;

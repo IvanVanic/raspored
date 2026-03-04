@@ -9,13 +9,7 @@
 
 import { useState, useEffect } from "react";
 import type { TemporalContext, SemesterPhase } from "@/data/types";
-import { getCurrentWeek } from "@/lib/date-utils";
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const TOTAL_WEEKS = 15;
+import { getCurrentWeek, TOTAL_WEEKS } from "@/lib/date-utils";
 
 /** Croatian day names in schedule order. Index matches days_order array. */
 const DAYS_ORDER: readonly string[] = [

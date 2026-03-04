@@ -10,12 +10,14 @@ export function SlotCard({
   onClick,
   urgency,
   timeStatus,
+  topic,
 }: {
   slot: Slot;
   showProf?: boolean;
   onClick?: () => void;
   urgency?: UrgencyLevel;
   timeStatus?: TimeStatus;
+  topic?: string;
 }) {
   const subj = subjectMap.get(slot.subject_id);
   const label = subj ? `${subj.short_name} (${subj.semester})` : slot.subject_id;
@@ -42,7 +44,7 @@ export function SlotCard({
         </span>
         {urgencyColor && (
           <span
-            className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+            className="urgency-dot"
             style={{ background: urgencyColor }}
           />
         )}
@@ -53,6 +55,16 @@ export function SlotCard({
           <span className="slot-time-badge" style={{ background: "var(--muted-fg)" }}>SLJEDEĆE</span>
         )}
       </div>
+
+      {/* Topic subtitle */}
+      {topic && (
+        <div className="mt-0.5 text-[11px] leading-tight"
+          style={{ color: slot.status === "M" ? "var(--m-text)" : "var(--e-text)", opacity: 0.75 }}
+        >
+          {topic}
+        </div>
+      )}
+
       <div className="text-muted-fg mt-0.5 text-[11px] leading-tight flex items-center">
         <span className="font-medium tabular-nums">{slot.room}</span>
         <MetaSep />
