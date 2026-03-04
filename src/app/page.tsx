@@ -38,7 +38,7 @@ export default function Home() {
       {/* "What's next" strip — mobile only, schedule view */}
       {view === "raspored" && (
         <div className="md:hidden">
-          <NextClassStrip currentMinutes={currentMinutes} />
+          <NextClassStrip currentMinutes={currentMinutes} onTap={setModalSlot} />
         </div>
       )}
 

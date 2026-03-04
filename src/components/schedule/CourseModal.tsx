@@ -1,16 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import type { Slot } from "@/data/types";
+import { useState, useEffect, useRef } from "react";
+import type { Slot, CurriculumEntry } from "@/data/types";
 import { subjectMap } from "@/data/schedule";
 import { curriculum } from "@/data/curriculum";
 import { getCurrentWeek, daysUntil, formatHrDate } from "@/lib/date-utils";
 import { extractCriticalDates } from "@/lib/extraction";
 import { TYPE_LABEL, EVENT_COLOR } from "@/lib/labels";
 import { useKeyboard } from "@/hooks/useKeyboard";
-import { MetaSep } from "@/components/shared/MetaSep";
-import type { CurriculumEntry } from "@/data/types";
-import { useEffect, useRef } from "react";
 
 type Tab = "sada" | "plan" | "rokovi";
 
@@ -84,26 +81,29 @@ export function CourseModal({ slot, onClose }: { slot: Slot; onClose: () => void
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2 mb-1 text-[11px] text-muted-fg flex-wrap">
-            <span className="font-medium">{slot.start}–{slot.end}</span>
-            <MetaSep />
-            <span>{slot.type === "P" ? "Predavanje" : "Vježbe"}</span>
-            <MetaSep />
-            <span>{slot.prof}</span>
-            <MetaSep />
-            <span>{slot.room}</span>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold tabular-nums bg-muted text-foreground">
+              {slot.start}–{slot.end}
+            </span>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-muted text-muted-fg">
+              {slot.type === "P" ? "Predavanje" : "Vježbe"}
+            </span>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-muted text-muted-fg">
+              {slot.room}
+            </span>
             {subj && (
-              <>
-                <MetaSep />
-                <span>Sem. {subj.semester}</span>
-              </>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-muted text-muted-fg">
+                Sem. {subj.semester}
+              </span>
             )}
             {slot.group && (
-              <>
-                <MetaSep />
-                <span>G{slot.group}</span>
-              </>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-muted text-muted-fg">
+                G{slot.group}
+              </span>
             )}
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-muted text-muted-fg truncate max-w-[160px]">
+              {slot.prof}
+            </span>
           </div>
 
           {/* Tabs */}
@@ -132,90 +132,169 @@ export function CourseModal({ slot, onClose }: { slot: Slot; onClose: () => void
         {/* Tab content */}
         <div className="overflow-y-auto" style={{ maxHeight: "55vh" }}>
           {/* SADA */}
-          {tab === "sada" && curr && (
-            <div className="px-5 py-4 space-y-4">
-              {/* Current week topic */}
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-fg mb-2">
-                  Tjedan {currentWeek} — {slot.type === "P" ? "Predavanje" : "Vježbe"}
-                </p>
-                {curr.weeks[currentWeek - 1] ? (
-                  <p className="text-[13px] text-foreground font-medium">
-                    {slot.type === "P"
-                      ? curr.weeks[currentWeek - 1].lecture
-                      : curr.weeks[currentWeek - 1].exercise}
+          {tab === "sada" && curr && (() => {
+            const totalPoints = curr.grading.reduce((s, g) => s + g.maxPoints, 0);
+            const topicText = curr.weeks[currentWeek - 1]
+              ? (slot.type === "P" ? curr.weeks[currentWeek - 1].lecture : curr.weeks[currentWeek - 1].exercise)
+              : null;
+            return (
+              <div className="px-5 py-4 space-y-5">
+                {/* Current week topic — inset card */}
+                <div className="rounded-lg p-3.5" style={{ background: "var(--muted)" }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-fg mb-1.5">
+                    Tjedan {currentWeek} &mdash; {slot.type === "P" ? "Predavanje" : "Vježbe"}
                   </p>
-                ) : (
-                  <p className="text-[12px] text-muted-fg">Nema podataka za ovaj tjedan.</p>
-                )}
-              </div>
+                  {topicText ? (
+                    <p className="text-[14px] text-foreground font-semibold leading-snug">
+                      {topicText}
+                    </p>
+                  ) : (
+                    <p className="text-[12px] text-muted-fg">Nema podataka za ovaj tjedan.</p>
+                  )}
+                </div>
 
-              {/* Grading */}
-              {curr.grading.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-fg mb-2">
-                    Vrednovanje
-                  </p>
-                  <div className="space-y-1">
-                    {curr.grading.map((g, i) => (
-                      <div key={i} className="flex items-baseline justify-between text-[12px]">
-                        <div>
-                          <span className="text-foreground">{g.component}</span>
-                          {g.note && (
-                            <span className="text-muted-fg ml-2 text-[10px]">{g.note}</span>
-                          )}
-                        </div>
-                        <span className="text-muted-fg tabular-nums ml-4">{g.maxPoints} bod.</span>
-                      </div>
-                    ))}
-                    <div className="flex justify-between text-[11px] pt-1 border-t border-border-subtle">
-                      <span className="text-muted-fg">Ukupno</span>
-                      <span className="text-foreground tabular-nums font-semibold">
-                        {curr.grading.reduce((s, g) => s + g.maxPoints, 0)} bod.
+                {/* Grading — bar chart rows */}
+                {curr.grading.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-fg mb-3">
+                      Vrednovanje
+                    </p>
+                    <div className="space-y-2.5">
+                      {curr.grading.map((g, i) => {
+                        const pct = totalPoints > 0 ? (g.maxPoints / totalPoints) * 100 : 0;
+                        return (
+                          <div key={i}>
+                            <div className="flex items-baseline justify-between mb-1">
+                              <span className="text-[12px] text-foreground font-medium">{g.component}</span>
+                              <span className="text-[12px] tabular-nums font-semibold text-foreground ml-4">{g.maxPoints}</span>
+                            </div>
+                            {g.note && (
+                              <p className="text-[10px] text-muted-fg mb-1">{g.note}</p>
+                            )}
+                            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+                              <div
+                                className="h-full rounded-full"
+                                style={{
+                                  width: `${pct}%`,
+                                  background: "var(--m-accent)",
+                                  opacity: 0.7,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div
+                      className="flex justify-between items-center text-[11px] mt-3 pt-2.5"
+                      style={{ borderTop: "1px solid var(--border)" }}
+                    >
+                      <span className="text-muted-fg uppercase tracking-[0.06em] font-semibold">Ukupno</span>
+                      <span className="text-foreground tabular-nums font-bold text-[14px]">
+                        {totalPoints} <span className="text-muted-fg text-[11px] font-normal">bod.</span>
                       </span>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            );
+          })()}
 
           {/* PLAN */}
           {tab === "plan" && curr && (
-            <div className="py-2" ref={planRef}>
-              {curr.weeks.map((w) => (
-                <div
-                  key={w.week}
-                  data-current={w.week === currentWeek ? "true" : "false"}
-                  className={`flex items-start gap-3 py-2 px-5 text-[12px] ${
-                    w.week === currentWeek
-                      ? "bg-m-tint-strong"
-                      : w.week < currentWeek
-                      ? "opacity-40"
-                      : ""
-                  }`}
-                >
-                  <span
-                    className="w-5 shrink-0 text-right tabular-nums text-[11px] mt-0.5"
-                    style={{
-                      color: w.week === currentWeek ? "var(--m-text)" : "var(--muted-fg)",
-                      fontWeight: w.week === currentWeek ? 700 : 400,
-                    }}
+            <div className="py-3 px-5" ref={planRef}>
+              {curr.weeks.map((w, idx) => {
+                const isCurrent = w.week === currentWeek;
+                const isPast = w.week < currentWeek;
+                const isLast = idx === curr.weeks.length - 1;
+                return (
+                  <div
+                    key={w.week}
+                    data-current={isCurrent ? "true" : "false"}
+                    className="flex items-stretch gap-3"
+                    style={{ opacity: isPast ? 0.38 : 1 }}
                   >
-                    {w.week}.
-                  </span>
-                  <div className="min-w-0">
-                    <div
-                      className={w.week === currentWeek ? "text-m-text font-semibold" : "text-foreground"}
-                    >
-                      {w.lecture}
+                    {/* Timeline rail */}
+                    <div className="flex flex-col items-center" style={{ width: 20, flexShrink: 0 }}>
+                      <div
+                        style={{
+                          width: isCurrent ? 10 : 6,
+                          height: isCurrent ? 10 : 6,
+                          borderRadius: "50%",
+                          flexShrink: 0,
+                          marginTop: isCurrent ? 3 : 5,
+                          background: isCurrent
+                            ? "var(--m-accent)"
+                            : isPast
+                            ? "var(--border)"
+                            : "var(--muted-fg)",
+                          boxShadow: isCurrent ? "0 0 0 3px color-mix(in srgb, var(--m-accent) 25%, transparent)" : "none",
+                        }}
+                      />
+                      {!isLast && (
+                        <div
+                          style={{
+                            flex: 1,
+                            width: 1,
+                            marginTop: 3,
+                            background: isCurrent
+                              ? "color-mix(in srgb, var(--m-accent) 40%, transparent)"
+                              : "var(--border)",
+                          }}
+                        />
+                      )}
                     </div>
-                    {w.exercise && w.exercise !== w.lecture && (
-                      <div className="text-[11px] text-muted-fg mt-0.5">V: {w.exercise}</div>
-                    )}
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0 pb-3" style={{ paddingTop: isCurrent ? 0 : 2 }}>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span
+                          className="text-[10px] font-bold tabular-nums tracking-[0.05em] uppercase"
+                          style={{ color: isCurrent ? "var(--m-text)" : "var(--muted-fg)" }}
+                        >
+                          T{w.week}
+                        </span>
+                        {isCurrent && (
+                          <span
+                            className="text-[9px] font-bold uppercase tracking-[0.08em] px-1.5 py-0.5 rounded"
+                            style={{
+                              background: "color-mix(in srgb, var(--m-accent) 20%, transparent)",
+                              color: "var(--m-text)",
+                            }}
+                          >
+                            Sada
+                          </span>
+                        )}
+                      </div>
+
+                      <div
+                        className="rounded-md"
+                        style={isCurrent ? {
+                          background: "var(--m-tint-strong)",
+                          border: "1px solid color-mix(in srgb, var(--m-accent) 30%, transparent)",
+                          padding: "8px 10px",
+                          marginBottom: 4,
+                        } : { paddingBottom: 2 }}
+                      >
+                        <p
+                          className="text-[12px] leading-snug"
+                          style={{
+                            color: "var(--foreground)",
+                            fontWeight: isCurrent ? 600 : 400,
+                          }}
+                        >
+                          {w.lecture}
+                        </p>
+                        {w.exercise && w.exercise !== w.lecture && (
+                          <p className="text-[11px] mt-1" style={{ color: "var(--muted-fg)" }}>
+                            V: {w.exercise}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 

@@ -12,7 +12,13 @@ const DAY_GENITIVE: Record<string, string> = {
   Petak: "u petak",
 };
 
-export function NextClassStrip({ currentMinutes }: { currentMinutes: number }) {
+export function NextClassStrip({
+  currentMinutes,
+  onTap,
+}: {
+  currentMinutes: number;
+  onTap?: (slot: import("@/data/types").Slot) => void;
+}) {
   const next = useMemo(() => getNextSlot(currentMinutes), [currentMinutes]);
 
   if (!next) return null;
@@ -44,8 +50,12 @@ export function NextClassStrip({ currentMinutes }: { currentMinutes: number }) {
 
   return (
     <div
-      className="flex items-center gap-3 px-4 py-2 border-b border-border-subtle"
+      className="flex items-center gap-3 px-4 py-2 border-b border-border-subtle cursor-pointer active:opacity-80 t-fast transition-opacity"
       style={{ background: "color-mix(in srgb, var(--m-tint) 60%, var(--background))" }}
+      onClick={() => onTap?.(slot)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onTap?.(slot); } }}
+      role="button"
+      tabIndex={0}
     >
       <span
         className="w-1.5 h-1.5 rounded-full shrink-0"

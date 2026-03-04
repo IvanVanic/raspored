@@ -423,3 +423,81 @@ body {
   border-radius: 50%;
   flex-shrink: 0;
 }
+
+/* ── Event row ───────────────────────────────────────────────── */
+.event-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+
+/* ── Countdown badge ─────────────────────────────────────────── */
+.event-countdown {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+/* ── Course select dropdown ──────────────────────────────────── */
+.course-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.course-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--muted);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 36px 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--duration-quick) var(--ease-out-expo),
+              background var(--duration-quick) var(--ease-out-expo);
+}
+
+.course-select:focus {
+  border-color: color-mix(in srgb, var(--foreground) 40%, transparent);
+  background: var(--card);
+}
+
+/* Suppress default OS arrow on IE/Edge legacy */
+.course-select::-ms-expand {
+  display: none;
+}
+
+/* Dropdown option colors — best-effort; OS controls this on most platforms */
+.course-select option {
+  background: var(--card);
+  color: var(--foreground);
+}
+
+.course-select-chevron {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted-fg);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}

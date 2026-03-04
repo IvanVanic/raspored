@@ -63,29 +63,29 @@ export function CalendarView() {
   return (
     <div className="pb-6">
       {/* Filter row */}
-      <div className="py-3 border-b border-border-subtle">
-        {/* Course filter */}
-        <div className="filter-chip-strip mb-2.5">
-          <button
-            className="filter-chip"
-            data-active={courseFilter === null ? "true" : "false"}
-            onClick={() => setCourseFilter(null)}
-          >
-            Svi kolegiji
-          </button>
-          {courses.map(c => (
-            <button
-              key={c.id}
-              className="filter-chip"
-              data-active={courseFilter === c.id ? "true" : "false"}
-              onClick={() => setCourseFilter(courseFilter === c.id ? null : c.id)}
+      <div className="py-3 border-b border-border-subtle space-y-2.5">
+        {/* Course filter — dropdown */}
+        <div className="px-4">
+          <div className="course-select-wrap">
+            <select
+              className="course-select"
+              value={courseFilter ?? ""}
+              onChange={e => setCourseFilter(e.target.value === "" ? null : e.target.value)}
             >
-              {c.short}
-            </button>
-          ))}
+              <option value="">Svi kolegiji</option>
+              {courses.map(c => (
+                <option key={c.id} value={c.id}>{c.short}</option>
+              ))}
+            </select>
+            <span className="course-select-chevron" aria-hidden>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
+          </div>
         </div>
 
-        {/* Type filter */}
+        {/* Type filter — chips */}
         <div className="filter-chip-strip">
           {TYPE_FILTERS.map(f => (
             <button
@@ -124,9 +124,15 @@ export function CalendarView() {
         {/* Ispiti — always shown separately at bottom */}
         {ispiti.length > 0 && (
           <div>
-            <h3 className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-fg mb-2">
-              Ispitni rokovi
-            </h3>
+            <div className="flex items-center gap-2 mb-2">
+              <span
+                className="inline-block w-0.5 h-3 rounded-full shrink-0"
+                style={{ background: "var(--e-accent)" }}
+              />
+              <h3 className="text-[10px] font-semibold uppercase tracking-[0.07em] text-muted-fg">
+                Ispitni rokovi
+              </h3>
+            </div>
             <div className="space-y-1">
               {ispiti
                 .filter(d => !d.date || daysUntil(d.date) >= 0)
@@ -188,12 +194,26 @@ function Section({
 }) {
   return (
     <div>
-      <h3
-        className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-2"
-        style={{ color: accent ? "var(--m-text)" : "var(--muted-fg)" }}
-      >
-        {title}
-      </h3>
+      <div className="flex items-center gap-2 mb-2">
+        {accent && (
+          <span
+            className="inline-block w-0.5 h-3 rounded-full shrink-0"
+            style={{ background: "var(--u-critical)" }}
+          />
+        )}
+        <h3
+          className="text-[10px] font-semibold uppercase tracking-[0.07em]"
+          style={{ color: accent ? "var(--u-critical)" : "var(--muted-fg)" }}
+        >
+          {title}
+        </h3>
+        <span
+          className="text-[10px] font-semibold tabular-nums"
+          style={{ color: accent ? "var(--u-critical)" : "var(--muted-fg)", opacity: 0.6 }}
+        >
+          {events.length}
+        </span>
+      </div>
       <div className="space-y-1">
         {events.map((event, i) => (
           <EventRow key={i} event={event} />
@@ -207,53 +227,71 @@ function EventRow({ event, compact }: { event: CriticalDate; compact?: boolean }
   const subj = subjectMap.get(event.subjectId);
   const days = event.date ? daysUntil(event.date) : null;
   const isSoon = days !== null && days >= 0 && days <= 7;
+  const isToday = days === 0;
+
+  const countdownColor = isToday
+    ? "var(--u-critical)"
+    : isSoon
+    ? "var(--u-approaching)"
+    : "var(--muted-fg)";
 
   return (
     <div
-      className="flex items-center gap-3 py-2 px-3 rounded-md"
+      className="event-row"
       style={{
         background: isSoon
-          ? "color-mix(in srgb, var(--u-critical-tint) 80%, transparent)"
+          ? "color-mix(in srgb, var(--u-critical-tint) 90%, transparent)"
           : "var(--muted)",
+        borderColor: isSoon
+          ? "color-mix(in srgb, var(--u-critical) 20%, transparent)"
+          : "transparent",
         animation: "row-in 200ms var(--ease-out-expo) both",
       }}
     >
+      {/* Left: dot + text block */}
       <span
-        className="urgency-dot shrink-0"
+        className="urgency-dot mt-px shrink-0"
         style={{ background: EVENT_COLOR[event.type] }}
       />
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          {!compact && (
-            <span className="text-[12px] font-semibold text-foreground">
-              {TYPE_LABEL[event.type]}
-            </span>
-          )}
-          <span className="text-[11px] text-muted-fg">
+        {/* Primary line: type label (bold) + course name */}
+        <div className="flex items-baseline gap-1.5 min-w-0">
+          <span className="text-[12px] font-semibold text-foreground leading-tight truncate">
+            {TYPE_LABEL[event.type]}
+          </span>
+          <span className="text-[11px] text-muted-fg leading-tight truncate shrink-0">
             {subj?.short_name ?? event.subjectId}
           </span>
-          {compact && (
-            <span className="text-[11px] text-muted-fg">
-              — {TYPE_LABEL[event.type]}
-            </span>
-          )}
         </div>
+        {/* Secondary line: date */}
         {event.date && (
-          <div className="text-[11px] text-muted-fg tabular-nums mt-0.5">
+          <div className="text-[11px] tabular-nums leading-tight mt-0.5"
+            style={{ color: isSoon ? "var(--u-approaching)" : "var(--muted-fg)" }}>
             {formatHrDate(event.date)}
           </div>
         )}
       </div>
+
+      {/* Right: countdown badge */}
       {days !== null && days >= 0 && (
         <span
-          className="text-[10px] font-semibold tabular-nums shrink-0"
-          style={{ color: isSoon ? "var(--u-critical)" : "var(--muted-fg)" }}
+          className="event-countdown"
+          style={{
+            color: countdownColor,
+            background: isToday
+              ? "color-mix(in srgb, var(--u-critical) 12%, transparent)"
+              : isSoon
+              ? "color-mix(in srgb, var(--u-approaching) 10%, transparent)"
+              : "var(--card)",
+          }}
         >
           {daysLabel(days)}
         </span>
       )}
       {!event.date && (
-        <span className="text-[10px] text-muted-fg shrink-0">T{event.week}</span>
+        <span className="event-countdown" style={{ color: "var(--muted-fg)", background: "var(--card)" }}>
+          T{event.week}
+        </span>
       )}
     </div>
   );
