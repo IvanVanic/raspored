@@ -24,6 +24,17 @@
   --shadow-card:       0 1px 4px 0 rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.05);
   --shadow-card-hover: 0 6px 20px 0 rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.08);
   --shadow-header:     0 1px 0 0 #272420;
+
+  --u-critical:       #c4603c;
+  --u-critical-tint:  #241812;
+  --u-approaching:    #c4a33c;
+  --u-approaching-tint: #24221a;
+  --u-ambient:        var(--muted-fg);
+
+  --ease-out-expo:    cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-quick:   120ms;
+  --duration-normal:  200ms;
+  --duration-slow:    300ms;
 }
 
 /* ── Tailwind v4 theme bridge ─────────────────────────────────── */
@@ -45,6 +56,11 @@
   --color-e-tint-strong: var(--e-tint-strong);
   --color-e-accent:      var(--e-accent);
   --color-e-text:        var(--e-text);
+
+  --color-u-critical:      var(--u-critical);
+  --color-u-critical-tint: var(--u-critical-tint);
+  --color-u-approaching:   var(--u-approaching);
+  --color-u-approaching-tint: var(--u-approaching-tint);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -145,6 +161,24 @@ body {
 .slot-subject-m { color: var(--m-text); }
 .slot-subject-e { color: var(--e-text); }
 
+/* ── Active slot highlight ────────────────────────────────────── */
+.slot-now {
+  box-shadow: inset 0 0 0 1px var(--m-accent);
+}
+
+.slot-time-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--background);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
 /* ── Slot cell sizing ─────────────────────────────────────────── */
 .slot-cell {
   padding: 8px 10px;
@@ -177,18 +211,18 @@ body {
 
 /* ── Transitions ──────────────────────────────────────────────── */
 .t-fast {
-  transition-duration: 120ms;
-  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  transition-duration: var(--duration-quick);
+  transition-timing-function: var(--ease-out-expo);
 }
 
 .t-base {
-  transition-duration: 200ms;
-  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-out-expo);
 }
 
 .t-slow {
-  transition-duration: 300ms;
-  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  transition-duration: var(--duration-slow);
+  transition-timing-function: var(--ease-out-expo);
 }
 
 /* ── Week badge ───────────────────────────────────────────────── */
@@ -203,6 +237,12 @@ body {
   background: color-mix(in srgb, var(--m-accent) 15%, transparent);
   color: var(--m-text);
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Data values ──────────────────────────────────────────────── */
+.data-value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 /* ── Modal ────────────────────────────────────────────────────── */
@@ -223,7 +263,7 @@ body {
   z-index: 51;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   width: min(480px, calc(100vw - 32px));
   max-height: calc(100vh - 64px);
   overflow-y: auto;

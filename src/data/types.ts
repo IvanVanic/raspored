@@ -67,3 +67,27 @@ export interface CurriculumEntry {
   grading: GradingInfo[];
   exams: string[];
 }
+
+export type UrgencyLevel = "critical" | "approaching" | "ambient";
+
+export type SemesterPhase = "settling" | "active" | "endgame";
+
+export interface CriticalDate {
+  subjectId: string;
+  label: string;
+  date: Date | null;
+  week: number;
+  type: "kolokvij" | "obrana" | "kviz" | "ispit";
+  urgency: UrgencyLevel;
+}
+
+export interface TemporalContext {
+  currentWeek: number;
+  dayOfWeek: number;
+  dayName: string | null;
+  timeOfDay: "morning" | "afternoon" | "evening";
+  isWeekend: boolean;
+  semesterProgress: number;
+  semesterPhase: SemesterPhase;
+  smartDefaultDay: number;
+}
