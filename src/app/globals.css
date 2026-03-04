@@ -1,61 +1,29 @@
 @import "tailwindcss";
 
-/* ── Light mode ─────────────────────────────────────────────────── */
+/* ── Design tokens (dark-only) ────────────────────────────────── */
 :root {
-  --background: #f5f4f0;
-  --foreground: #181715;
-  --border: #dedad3;
-  --border-subtle: #e8e4dd;
-  --muted: #eceae4;
-  --muted-fg: #7d7872;
-  --card: #faf9f6;
-  --card-hover: #f7f6f2;
-
-  --m-tint: #edf4ed;
-  --m-tint-strong: #ddeedd;
-  --m-accent: #2d6e3a;
-  --m-text: #245530;
-
-  --e-tint: #ecf1f9;
-  --e-tint-strong: #d9e5f5;
-  --e-accent: #3060a8;
-  --e-text: #244d8a;
-
-  --clash-ring: #c41e1e;
-  --clash-bg: #fdf0f0;
-
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 0 0 1px rgb(0 0 0 / 0.05);
-  --shadow-card-hover: 0 6px 16px 0 rgb(0 0 0 / 0.09), 0 0 0 1px rgb(0 0 0 / 0.07);
-  --shadow-header: 0 1px 0 0 #dedad3;
-}
-
-/* ── Dark mode ──────────────────────────────────────────────────── */
-.dark {
-  --background: #131210;
-  --foreground: #eeebe5;
-  --border: #272420;
+  --background:    #131210;
+  --foreground:    #eeebe5;
+  --border:        #272420;
   --border-subtle: #1f1d1b;
-  --muted: #1c1a17;
-  --muted-fg: #8a8680;
-  --card: #1f1d1a;
-  --card-hover: #242220;
+  --muted:         #1c1a17;
+  --muted-fg:      #8a8680;
+  --card:          #1f1d1a;
+  --card-hover:    #242220;
 
-  --m-tint: #141c14;
+  --m-tint:        #141c14;
   --m-tint-strong: #1a2a1a;
-  --m-accent: #52945c;
-  --m-text: #82c48c;
+  --m-accent:      #52945c;
+  --m-text:        #82c48c;
 
-  --e-tint: #111620;
+  --e-tint:        #111620;
   --e-tint-strong: #162038;
-  --e-accent: #4d74be;
-  --e-text: #80a6de;
+  --e-accent:      #4d74be;
+  --e-text:        #80a6de;
 
-  --clash-ring: #e53535;
-  --clash-bg: #1c0f0f;
-
-  --shadow-card: 0 1px 4px 0 rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.05);
+  --shadow-card:       0 1px 4px 0 rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.05);
   --shadow-card-hover: 0 6px 20px 0 rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.08);
-  --shadow-header: 0 1px 0 0 #272420;
+  --shadow-header:     0 1px 0 0 #272420;
 }
 
 /* ── Tailwind v4 theme bridge ─────────────────────────────────── */
@@ -78,14 +46,11 @@
   --color-e-accent:      var(--e-accent);
   --color-e-text:        var(--e-text);
 
-  --color-clash-ring:    var(--clash-ring);
-  --color-clash-bg:      var(--clash-bg);
-
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-/* ── Base ──────────────────────────────────────────────────────── */
+/* ── Base ─────────────────────────────────────────────────────── */
 *, *::before, *::after {
   border-color: var(--border);
   box-sizing: border-box;
@@ -139,6 +104,11 @@ body {
   background: color-mix(in srgb, var(--muted) 30%, transparent);
 }
 
+/* ── Today column highlight ───────────────────────────────────── */
+.today-col {
+  background: color-mix(in srgb, var(--m-accent) 6%, transparent);
+}
+
 /* ── Slot cards ───────────────────────────────────────────────── */
 .slot-card-m,
 .slot-card-e {
@@ -168,56 +138,17 @@ body {
 
 .slot-card-m:hover,
 .slot-card-e:hover {
-  filter: brightness(0.97);
-  transition: filter 120ms ease;
-}
-.dark .slot-card-m:hover,
-.dark .slot-card-e:hover {
   filter: brightness(1.08);
+  transition: filter 120ms ease;
 }
 
 .slot-subject-m { color: var(--m-text); }
 .slot-subject-e { color: var(--e-text); }
 
-/* ── Clash state ──────────────────────────────────────────────── */
-.slot-clash {
-  background: var(--clash-bg) !important;
-  box-shadow:
-    0 0 0 2px var(--clash-ring),
-    0 0 0 4px color-mix(in srgb, var(--clash-ring) 20%, transparent);
-  animation: clash-in 400ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
-}
-
-.slot-clash::before {
-  background: var(--clash-ring) !important;
-}
-
-@keyframes clash-in {
-  0% {
-    box-shadow: 0 0 0 0px var(--clash-ring), 0 0 0 0px transparent;
-    scale: 0.97;
-  }
-  60% {
-    box-shadow: 0 0 0 3px var(--clash-ring), 0 0 0 6px color-mix(in srgb, var(--clash-ring) 25%, transparent);
-    scale: 1.01;
-  }
-  100% {
-    box-shadow: 0 0 0 2px var(--clash-ring), 0 0 0 4px color-mix(in srgb, var(--clash-ring) 20%, transparent);
-    scale: 1;
-  }
-}
-
-/* ── Status badges ────────────────────────────────────────────── */
-.badge-m {
-  background: color-mix(in srgb, var(--m-accent) 12%, transparent);
-  color: var(--m-text);
-  border: 1px solid color-mix(in srgb, var(--m-accent) 25%, transparent);
-}
-
-.badge-e {
-  background: color-mix(in srgb, var(--e-accent) 12%, transparent);
-  color: var(--e-text);
-  border: 1px solid color-mix(in srgb, var(--e-accent) 25%, transparent);
+/* ── Slot cell sizing ─────────────────────────────────────────── */
+.slot-cell {
+  padding: 8px 10px;
+  min-height: 52px;
 }
 
 /* ── Segment control ──────────────────────────────────────────── */
@@ -231,17 +162,6 @@ body {
   color: var(--foreground);
   font-weight: 700;
   box-shadow: inset 0 -2px 0 0 var(--foreground);
-}
-
-/* ── Uniform slot cell sizing ─────────────────────────────────── */
-.slot-cell {
-  padding: 8px 10px;
-  min-height: 52px;
-}
-
-.slot-cell-compact {
-  padding: 5px 8px;
-  min-height: 36px;
 }
 
 /* ── Metadata separator ───────────────────────────────────────── */
@@ -269,4 +189,74 @@ body {
 .t-slow {
   transition-duration: 300ms;
   transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ── Week badge ───────────────────────────────────────────────── */
+.week-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: color-mix(in srgb, var(--m-accent) 15%, transparent);
+  color: var(--m-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Modal ────────────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  animation: fade-in 200ms ease both;
+}
+
+.modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 51;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  box-shadow: 0 24px 48px rgb(0 0 0 / 0.5);
+  animation: modal-in 250ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+/* Mobile bottom sheet */
+@media (max-width: 767px) {
+  .modal-content {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transform: none;
+    width: 100%;
+    max-height: 85vh;
+    border-radius: 16px 16px 0 0;
+    animation: sheet-up 300ms cubic-bezier(0.2, 0, 0, 1) both;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modal-in {
+  from { opacity: 0; scale: 0.95; }
+  to   { opacity: 1; scale: 1; }
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
 }

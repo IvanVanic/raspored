@@ -7,7 +7,6 @@ export interface Slot {
   prof: string;
   room: string;
   status: "M" | "E";
-  note?: string;
 }
 
 export interface Subject {
@@ -26,14 +25,6 @@ export interface Subject {
     room: string;
   }>;
   assigned_group: string | null;
-  group_reason: string;
-  active_slots_summary: string;
-  notes?: string;
-}
-
-export interface ClashResolved {
-  description: string;
-  resolution: string;
 }
 
 export interface TimeSlot {
@@ -48,15 +39,31 @@ export interface ScheduleData {
     faculty: string;
     year: string;
     semester: string;
-    student_context: string;
     generated: string;
   };
   status_definitions: Record<string, string>;
   type_definitions: Record<string, string>;
   subjects: Subject[];
   personal_schedule: Record<string, Slot[]>;
-  clashes_resolved: ClashResolved[];
   day_time_slots: TimeSlot[];
   days_order: string[];
-  display_notes: string[];
+}
+
+export interface WeekTopic {
+  week: number;
+  lecture: string;
+  exercise: string;
+}
+
+export interface GradingInfo {
+  component: string;
+  maxPoints: number;
+  note?: string;
+}
+
+export interface CurriculumEntry {
+  subjectId: string;
+  weeks: WeekTopic[];
+  grading: GradingInfo[];
+  exams: string[];
 }
