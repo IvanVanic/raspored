@@ -1,4 +1,4 @@
-const CACHE_NAME = "raspored-v4";
+const CACHE_NAME = "raspored-v5";
 const ASSETS = [
   "/",
   "/manifest.json",

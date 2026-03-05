@@ -636,50 +636,91 @@ function TestDetailPanel({
 
   const progress = getProgress(cd.subjectId, cd.type, cd.week);
   const pct = total > 0 ? (done / total) * 100 : 0;
+  const eventColor = EVENT_COLOR[cd.type];
+
+  const checkSvg = (color: string) => (
+    <svg
+      className="prep-check-mark"
+      width="9" height="9" viewBox="0 0 9 9"
+      fill="none" stroke="currentColor"
+      strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+      style={{ color }}
+    >
+      <polyline points="1.5,4.5 3.5,6.5 7.5,2" />
+    </svg>
+  );
 
   return (
     <div
       className="mx-1 mb-2 rounded-lg overflow-hidden"
       style={{
         background: "var(--card)",
-        border: "1px solid var(--border)",
+        border: `1px solid color-mix(in srgb, ${eventColor} 25%, var(--border))`,
+        borderLeft: `3px solid color-mix(in srgb, ${eventColor} 60%, transparent)`,
         animation: "row-in 150ms var(--ease-out-expo) both",
       }}
     >
-      <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-        <div className="flex items-center gap-2 mb-1.5">
-          {points !== null && (
-            <span className="text-[11px] font-semibold text-foreground tabular-nums">
-              {points} bod.
+      {/* Progress header */}
+      <div className="px-3 pt-3 pb-2.5" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-baseline gap-2">
+            {points !== null && (
+              <span className="text-[13px] font-bold tabular-nums tracking-tight" style={{ color: eventColor }}>
+                {points}
+                <span className="text-[10px] font-semibold ml-0.5" style={{ color: "var(--muted-fg)" }}>bod.</span>
+              </span>
+            )}
+            <span className="text-[11px] tabular-nums" style={{ color: "var(--muted-fg)" }}>
+              {done}<span style={{ color: "var(--border)", margin: "0 2px" }}>/</span>{total}
+              <span className="ml-1" style={{ color: "var(--muted-fg)", opacity: 0.6 }}>obrađeno</span>
             </span>
-          )}
-          <span className="text-[11px] text-muted-fg tabular-nums">
-            {done}/{total} obrađeno
+          </div>
+          <span
+            className="text-[10px] font-bold tabular-nums px-2 py-0.5 rounded-full"
+            style={{
+              background: pct === 100
+                ? "color-mix(in srgb, var(--m-accent) 20%, transparent)"
+                : `color-mix(in srgb, ${eventColor} 12%, transparent)`,
+              color: pct === 100 ? "var(--m-text)" : eventColor,
+            }}
+          >
+            {Math.round(pct)}%
           </span>
         </div>
-        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
-          <div
-            className="h-full rounded-full t-fast"
-            style={{
-              width: `${pct}%`,
-              background: EVENT_COLOR[cd.type],
-              transition: "width 200ms var(--ease-out-expo)",
-            }}
-          />
-        </div>
+
+        {/* Segmented progress track */}
+        {total <= 20 ? (
+          <div className="flex gap-0.5" style={{ height: 4 }}>
+            {Array.from({ length: total }).map((_, i) => (
+              <div
+                key={i}
+                className="flex-1 rounded-sm"
+                style={{
+                  background: i < done ? eventColor : "var(--border)",
+                  transition: `background 200ms ${i * 30}ms`,
+                  opacity: i < done ? 1 : 0.5,
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+            <div style={{ width: `${pct}%`, height: "100%", background: eventColor, borderRadius: 9999, transition: "width 200ms var(--ease-out-expo)" }} />
+          </div>
+        )}
       </div>
 
-      <div className="px-3 py-2 space-y-2">
+      {/* Topic checklist */}
+      <div className="px-3 py-2 space-y-1.5">
         {topics.map(topic => {
           if (topic.isHoliday) {
             return (
-              <div key={topic.week} className="opacity-30 py-1">
-                <span className="text-[10px] font-bold tabular-nums tracking-[0.05em] uppercase text-muted-fg">
-                  T{topic.week}
+              <div key={topic.week} className="flex items-center gap-2 py-1 opacity-25">
+                <div className="flex-1" style={{ height: 1, background: "var(--border-subtle)" }} />
+                <span className="text-[9px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--muted-fg)" }}>
+                  T{topic.week} · praznik
                 </span>
-                <span className="text-[10px] text-muted-fg ml-2">
-                  {topic.lecture}
-                </span>
+                <div className="flex-1" style={{ height: 1, background: "var(--border-subtle)" }} />
               </div>
             );
           }
@@ -692,43 +733,79 @@ function TestDetailPanel({
           const exerciseChecked = !!progress.checked[exerciseKey];
 
           return (
-            <div key={topic.week}>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-bold tabular-nums tracking-[0.05em] uppercase text-muted-fg">
+            <div
+              key={topic.week}
+              style={{
+                paddingLeft: 10,
+                marginBottom: 2,
+                borderLeft: `2px solid color-mix(in srgb, ${eventColor} 25%, transparent)`,
+              }}
+            >
+              <div className="flex items-center gap-2 mb-1" style={{ marginLeft: -10, paddingLeft: 8 }}>
+                <span
+                  className="text-[10px] font-bold tabular-nums tracking-[0.06em] uppercase"
+                  style={{ color: eventColor, opacity: 0.7 }}
+                >
                   T{topic.week}
                 </span>
-                <span className="text-[9px] text-muted-fg tabular-nums">{dateRange}</span>
+                <span className="text-[9px] tabular-nums" style={{ color: "var(--muted-fg)" }}>{dateRange}</span>
               </div>
+
+              {/* Lecture checkbox */}
               <label
-                className="flex items-start gap-2 py-0.5 cursor-pointer"
-                style={{ opacity: lectureChecked ? 0.4 : 1 }}
+                className="prep-check"
+                data-checked={lectureChecked ? "true" : "false"}
+                style={{
+                  opacity: lectureChecked ? 0.45 : 1,
+                  transition: "opacity 200ms var(--ease-out-expo)",
+                  "--check-color": eventColor,
+                } as React.CSSProperties}
               >
                 <input
                   type="checkbox"
                   checked={lectureChecked}
                   onChange={() => onToggleTopic(cd.subjectId, cd.type, cd.week, lectureKey)}
-                  className="mt-0.5 shrink-0"
-                  style={{ accentColor: EVENT_COLOR[cd.type] }}
                 />
-                <span className={`text-[11px] leading-snug ${lectureChecked ? "line-through" : ""}`}>
-                  <span className="text-[9px] font-bold uppercase tracking-[0.08em] mr-1" style={{ color: "var(--m-text)" }}>P</span>
-                  {topic.lecture}
+                <span className="prep-check-box" aria-hidden="true">{checkSvg(eventColor)}</span>
+                <span className="flex-1 text-[12px] leading-snug">
+                  <span
+                    className="inline-block text-[9px] font-bold uppercase tracking-[0.1em] mr-1.5 px-1 py-px rounded"
+                    style={{ background: "color-mix(in srgb, var(--m-accent) 15%, transparent)", color: "var(--m-text)", verticalAlign: "1px" }}
+                  >P</span>
+                  <span style={{
+                    textDecoration: lectureChecked ? "line-through" : "none",
+                    textDecorationColor: "var(--muted-fg)",
+                    color: lectureChecked ? "var(--muted-fg)" : "var(--foreground)",
+                  }}>{topic.lecture}</span>
                 </span>
               </label>
+
+              {/* Exercise checkbox */}
               <label
-                className="flex items-start gap-2 py-0.5 cursor-pointer"
-                style={{ opacity: exerciseChecked ? 0.4 : 1 }}
+                className="prep-check"
+                data-checked={exerciseChecked ? "true" : "false"}
+                style={{
+                  opacity: exerciseChecked ? 0.45 : 1,
+                  transition: "opacity 200ms var(--ease-out-expo)",
+                  "--check-color": eventColor,
+                } as React.CSSProperties}
               >
                 <input
                   type="checkbox"
                   checked={exerciseChecked}
                   onChange={() => onToggleTopic(cd.subjectId, cd.type, cd.week, exerciseKey)}
-                  className="mt-0.5 shrink-0"
-                  style={{ accentColor: EVENT_COLOR[cd.type] }}
                 />
-                <span className={`text-[11px] leading-snug ${exerciseChecked ? "line-through" : ""}`}>
-                  <span className="text-[9px] font-bold uppercase tracking-[0.08em] mr-1" style={{ color: "var(--e-text)" }}>V</span>
-                  {topic.exercise}
+                <span className="prep-check-box" aria-hidden="true">{checkSvg(eventColor)}</span>
+                <span className="flex-1 text-[12px] leading-snug">
+                  <span
+                    className="inline-block text-[9px] font-bold uppercase tracking-[0.1em] mr-1.5 px-1 py-px rounded"
+                    style={{ background: "color-mix(in srgb, var(--e-accent) 15%, transparent)", color: "var(--e-text)", verticalAlign: "1px" }}
+                  >V</span>
+                  <span style={{
+                    textDecoration: exerciseChecked ? "line-through" : "none",
+                    textDecorationColor: "var(--muted-fg)",
+                    color: exerciseChecked ? "var(--muted-fg)" : "var(--foreground)",
+                  }}>{topic.exercise}</span>
                 </span>
               </label>
             </div>
