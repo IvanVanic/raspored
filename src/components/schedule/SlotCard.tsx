@@ -85,13 +85,13 @@ export function SlotCard({
 
       {/* Row 3: Meta — group · room · prof */}
       <div className="mt-1.5 text-muted-fg text-[11px] leading-none flex items-center gap-0 opacity-60 group-hover:opacity-90 t-fast transition-opacity">
+        <span className="font-medium tabular-nums">{slot.room}</span>
         {slot.group && (
           <>
-            <span className="font-medium">{slot.group}</span>
             <MetaSep />
+            <span className="font-medium">{slot.group}</span>
           </>
         )}
-        <span className="font-medium tabular-nums">{slot.room}</span>
         {showProf && slot.prof && (
           <>
             <MetaSep />

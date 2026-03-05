@@ -44,7 +44,7 @@ export const COURSE_COLOR: Record<string, { accent: string; text: string; tint: 
   modpod: { accent: "#3ca5a5", text: "#6ecece", tint: "#121e1e" },
   ovis:   { accent: "#9c6cc4", text: "#bea0dc", tint: "#1a141e" },
   uasp:   { accent: "#4da5c4", text: "#7ec8e0", tint: "#121a1e" },
-  aor:    { accent: "#c4803c", text: "#dcaa6e", tint: "#1e1814" },
+  aor:    { accent: "#9e9a94", text: "#c0bdb8", tint: "#1a1918" },
   oi:     { accent: "#c45ca5", text: "#dc8ac8", tint: "#1e1218" },
   upw:    { accent: "#52945c", text: "#82c48c", tint: "#141c14" },
 };
