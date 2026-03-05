@@ -5,7 +5,7 @@ import { curriculum } from "@/data/curriculum";
 import { subjectMap, data } from "@/data/schedule";
 import { extractCriticalDates } from "@/lib/extraction";
 import { formatHrDate, daysUntil } from "@/lib/date-utils";
-import { TYPE_LABEL, TYPE_CATEGORY, EVENT_COLOR } from "@/lib/labels";
+import { TYPE_LABEL, TYPE_CATEGORY, EVENT_COLOR, TEST_TYPES } from "@/lib/labels";
 import type { CurriculumEntry, CriticalDate, EventType } from "@/data/types";
 import { Dropdown } from "@/components/shared/Dropdown";
 
@@ -29,7 +29,7 @@ const TYPE_FILTERS: { label: string; value: EventType | "ostalo" | null }[] = [
   { label: "Ostalo", value: "ostalo" },
 ];
 
-export function CalendarView() {
+export function CalendarView({ onTestTap }: { onTestTap?: (event: CriticalDate) => void }) {
   const [courseFilter, setCourseFilter] = useState<CourseFilter>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>(null);
   const [showPast, setShowPast] = useState(false);
@@ -93,16 +93,16 @@ export function CalendarView() {
 
       <div className="px-4 pt-4 space-y-5">
         {thisWeek.length > 0 && (
-          <Section title="Ovaj tjedan" events={thisWeek} urgency="critical" />
+          <Section title="Ovaj tjedan" events={thisWeek} urgency="critical" onTestTap={onTestTap} />
         )}
         {soon.length > 0 && (
-          <Section title="Uskoro" events={soon} urgency="approaching" />
+          <Section title="Uskoro" events={soon} urgency="approaching" onTestTap={onTestTap} />
         )}
         {later.length > 0 && (
-          <Section title="Kasnije" events={later} />
+          <Section title="Kasnije" events={later} onTestTap={onTestTap} />
         )}
         {undated.length > 0 && (
-          <Section title="Bez datuma" events={undated} />
+          <Section title="Bez datuma" events={undated} onTestTap={onTestTap} />
         )}
 
         {/* Ispiti — always at bottom */}
@@ -125,7 +125,7 @@ export function CalendarView() {
                 .filter(d => !d.date || daysUntil(d.date) >= 0)
                 .filter(d => !courseFilter || d.subjectId === courseFilter)
                 .map((event, i) => (
-                  <EventRow key={`isp-${i}`} event={event} compact />
+                  <EventRow key={`isp-${i}`} event={event} compact onTestTap={onTestTap} />
                 ))}
             </div>
             {ispiti.filter(d => d.date && daysUntil(d.date) < 0).filter(d => !courseFilter || d.subjectId === courseFilter).length > 0 && (
@@ -134,7 +134,7 @@ export function CalendarView() {
                   .filter(d => d.date && daysUntil(d.date) < 0)
                   .filter(d => !courseFilter || d.subjectId === courseFilter)
                   .map((event, i) => (
-                    <EventRow key={`isp-p-${i}`} event={event} compact />
+                    <EventRow key={`isp-p-${i}`} event={event} compact onTestTap={onTestTap} />
                   ))}
               </div>
             )}
@@ -153,7 +153,7 @@ export function CalendarView() {
             </button>
             {showPast && (
               <div className="mt-2 space-y-1 opacity-40">
-                {past.map((event, i) => <EventRow key={`p-${i}`} event={event} />)}
+                {past.map((event, i) => <EventRow key={`p-${i}`} event={event} onTestTap={onTestTap} />)}
               </div>
             )}
           </div>
@@ -173,10 +173,12 @@ function Section({
   title,
   events,
   urgency,
+  onTestTap,
 }: {
   title: string;
   events: CriticalDate[];
   urgency?: "critical" | "approaching";
+  onTestTap?: (event: CriticalDate) => void;
 }) {
   const accentColor = urgency === "critical"
     ? "var(--u-critical)"
@@ -208,14 +210,15 @@ function Section({
       </div>
       <div className="space-y-1">
         {events.map((event, i) => (
-          <EventRow key={i} event={event} />
+          <EventRow key={i} event={event} onTestTap={onTestTap} />
         ))}
       </div>
     </div>
   );
 }
 
-function EventRow({ event, compact }: { event: CriticalDate; compact?: boolean }) {
+function EventRow({ event, compact, onTestTap }: { event: CriticalDate; compact?: boolean; onTestTap?: (event: CriticalDate) => void }) {
+  const isTest = TEST_TYPES.has(event.type);
   const subj = subjectMap.get(event.subjectId);
   const days = event.date ? daysUntil(event.date) : null;
   const isSoon = days !== null && days >= 0 && days <= 7;
@@ -239,9 +242,11 @@ function EventRow({ event, compact }: { event: CriticalDate; compact?: boolean }
   return (
     <div
       className="event-row"
+      onClick={() => isTest && onTestTap?.(event)}
       style={{
         paddingLeft: 9,
         borderLeft: `3px solid ${EVENT_COLOR[event.type]}`,
+        cursor: isTest && onTestTap ? "pointer" : undefined,
         background: isSoon
           ? "color-mix(in srgb, var(--u-critical-tint) 90%, transparent)"
           : "var(--muted)",

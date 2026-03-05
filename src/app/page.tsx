@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { data } from "@/data/schedule";
-import type { Slot } from "@/data/types";
+import type { Slot, CriticalDate } from "@/data/types";
 import { useTemporalContext } from "@/hooks/useTemporalContext";
 import { TopBar } from "@/components/layout/TopBar";
 import { BottomTabBar } from "@/components/layout/BottomTabBar";
@@ -21,6 +21,7 @@ export default function Home() {
   const [dayIdx, setDayIdx] = useState(temporal.smartDefaultDay);
   const [modalSlot, setModalSlot] = useState<Slot | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
+  const [testExpand, setTestExpand] = useState<{ subjectId: string; event: CriticalDate } | null>(null);
 
   // Sync dayIdx with correct smartDefaultDay after hydration
   const hydrated = useRef(false);
@@ -30,6 +31,11 @@ export default function Home() {
       setDayIdx(temporal.smartDefaultDay);
     }
   }, [temporal.smartDefaultDay]);
+
+  const onTestTap = (event: CriticalDate) => {
+    setTestExpand({ subjectId: event.subjectId, event });
+    setModalSlot(null); // clear slot-based modal
+  };
 
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -63,7 +69,7 @@ export default function Home() {
           </div>
         </>
       ) : (
-        <CalendarView />
+        <CalendarView onTestTap={onTestTap} />
       )}
 
       {/* Course modal */}
@@ -71,11 +77,23 @@ export default function Home() {
         <CourseModal slot={modalSlot} onClose={() => setModalSlot(null)} />
       )}
 
+      {/* Test detail modal (from CalendarView / SemesterTimeline) */}
+      {testExpand && !modalSlot && (
+        <CourseModal
+          slot={null}
+          subjectId={testExpand.subjectId}
+          initialTab="rokovi"
+          initialTestExpand={testExpand.event}
+          onClose={() => setTestExpand(null)}
+        />
+      )}
+
       {/* Semester timeline — bottom sheet */}
       <SemesterTimeline
         currentWeek={temporal.currentWeek}
         isOpen={timelineOpen}
         onClose={() => setTimelineOpen(false)}
+        onTestTap={onTestTap}
       />
 
       {/* Bottom tab bar — mobile only */}

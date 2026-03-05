@@ -5,7 +5,7 @@ import { curriculum } from "@/data/curriculum";
 import { subjectMap } from "@/data/schedule";
 import { extractCriticalDates } from "@/lib/extraction";
 import { SEMESTER_START, TOTAL_WEEKS, formatHrDate, getWeekForDate } from "@/lib/date-utils";
-import { TYPE_LABEL, EVENT_COLOR } from "@/lib/labels";
+import { TYPE_LABEL, EVENT_COLOR, TEST_TYPES } from "@/lib/labels";
 import type { CurriculumEntry, CriticalDate } from "@/data/types";
 
 const CROATIAN_MONTHS = ["Siječanj", "Veljača", "Ožujak", "Travanj", "Svibanj", "Lipanj",
@@ -197,9 +197,10 @@ interface EventDetailPanelProps {
   events: CriticalDate[];
   currentWeek: number;
   onClose: () => void;
+  onTestTap?: (event: CriticalDate) => void;
 }
 
-function EventDetailPanel({ selectedDate, events, currentWeek, onClose }: EventDetailPanelProps) {
+function EventDetailPanel({ selectedDate, events, currentWeek, onClose, onTestTap }: EventDetailPanelProps) {
   const week = getWeekForDate(selectedDate);
   const isCurrentWeek = week === currentWeek;
 
@@ -256,9 +257,11 @@ function EventDetailPanel({ selectedDate, events, currentWeek, onClose }: EventD
                 <div
                   key={i}
                   className="flex items-start gap-2.5"
+                  onClick={() => TEST_TYPES.has(event.type) && onTestTap?.(event)}
                   style={{
                     paddingLeft: 9,
                     borderLeft: `3px solid ${EVENT_COLOR[event.type]}`,
+                    cursor: TEST_TYPES.has(event.type) && onTestTap ? "pointer" : undefined,
                   }}
                 >
                   <div className="flex-1 min-w-0">
@@ -299,10 +302,12 @@ export function SemesterTimeline({
   currentWeek,
   isOpen,
   onClose,
+  onTestTap,
 }: {
   currentWeek: number;
   isOpen: boolean;
   onClose: () => void;
+  onTestTap?: (event: CriticalDate) => void;
 }) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -391,6 +396,7 @@ export function SemesterTimeline({
               events={selectedEvents}
               currentWeek={currentWeek}
               onClose={closeDetail}
+              onTestTap={onTestTap}
             />
           )}
 

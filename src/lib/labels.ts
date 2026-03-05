@@ -1,5 +1,6 @@
 import type { EventType } from "@/data/types";
 
+export const TEST_TYPES: Set<EventType> = new Set(["kolokvij", "ispit", "kontrolna", "kviz"]);
 export const TYPE_LABEL: Record<EventType, string> = {
   kolokvij: "Kolokvij",
   obrana: "Obrana",
