@@ -100,7 +100,8 @@ export function extractCriticalDates(
 ): CriticalDate[] {
   const results: CriticalDate[] = [];
 
-  for (const [subjectId, entry] of Object.entries(curriculum)) {
+  for (const [rawSubjectId, entry] of Object.entries(curriculum)) {
+    const subjectId = rawSubjectId.toLowerCase();
     // --- Scan week topics (lecture + exercise) ---
     for (const weekTopic of entry.weeks) {
       const sources: Array<{ text: string; source: "lecture" | "exercise" }> = [
