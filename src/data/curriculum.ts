@@ -95,7 +95,7 @@ const modpod = {
     { component: "Projekt",                 maxPoints: 40 },
     { component: "Aktivnost na vježbama",   maxPoints: 30 },
   ] satisfies GradingInfo[],
-  exams: ["22.06.2026.", "06.07.2026.", "01.09.2026.", "08.09.2026."],
+  exams: ["25.06.2026.", "09.07.2026.", "26.08.2026.", "09.09.2026."],
 } satisfies CurriculumEntry;
 
 const ovis = {
