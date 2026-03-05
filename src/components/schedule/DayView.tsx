@@ -41,7 +41,7 @@ function getTimeStatuses(slots: Slot[], isToday: boolean): TimeStatus[] {
 
 /** Returns the topic string for a slot based on current week and slot type. */
 function getSlotTopic(subjectId: string, slotType: "P" | "V", currentWeek: number): string | undefined {
-  const curr = curriculum[subjectId];
+  const curr = curriculum[subjectId.toUpperCase()];
   if (!curr) return undefined;
   const weekData = curr.weeks[currentWeek - 1];
   if (!weekData) return undefined;

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { Slot } from "@/data/types";
 import { data } from "@/data/schedule";
 import { curriculum } from "@/data/curriculum";
+import { getCurrentWeek } from "@/lib/date-utils";
 import { getSubjectUrgencies } from "@/lib/extraction";
 import { SlotCard } from "./SlotCard";
 
@@ -13,9 +14,18 @@ function getTodayDayName(): string | null {
   return null;
 }
 
+function getSlotTopic(subjectId: string, slotType: "P" | "V", currentWeek: number): string | undefined {
+  const curr = curriculum[subjectId.toUpperCase()];
+  if (!curr) return undefined;
+  const weekData = curr.weeks[currentWeek - 1];
+  if (!weekData) return undefined;
+  return slotType === "P" ? weekData.lecture : weekData.exercise;
+}
+
 export function DesktopGrid({ onSlotClick }: { onSlotClick: (slot: Slot) => void }) {
   const timeSlots = data.day_time_slots;
   const todayName = getTodayDayName();
+  const currentWeek = getCurrentWeek();
 
   const urgencies = useMemo(() => getSubjectUrgencies(curriculum), []);
 
@@ -76,6 +86,7 @@ export function DesktopGrid({ onSlotClick }: { onSlotClick: (slot: Slot) => void
                           slot={slot}
                           onClick={() => onSlotClick(slot)}
                           urgency={urgencies.get(slot.subject_id)}
+                          topic={getSlotTopic(slot.subject_id, slot.type as "P" | "V", currentWeek)}
                         />
                       )}
                     </td>

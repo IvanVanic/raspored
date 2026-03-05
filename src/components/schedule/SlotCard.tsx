@@ -66,11 +66,10 @@ export function SlotCard({
         </div>
       </div>
 
-      {/* Row 2: Topic — single line, hard truncated */}
+      {/* Row 2: Topic — truncated, grey, italic */}
       {topic && (
         <div
-          className="mt-1.5 text-[12px] leading-snug truncate"
-          style={{ color: isM ? "var(--m-text)" : "var(--e-text)", opacity: 0.75 }}
+          className="mt-1.5 text-[11px] leading-snug truncate italic text-muted-fg opacity-60"
         >
           {topic}
         </div>
