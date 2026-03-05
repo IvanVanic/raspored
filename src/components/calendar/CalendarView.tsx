@@ -17,15 +17,16 @@ function daysLabel(days: number): string {
 }
 
 type CourseFilter = string | null; // null = all
-type TypeFilter = EventType | null; // null = all
+type TypeFilter = EventType | "ostalo" | null; // null = all
 
-const TYPE_FILTERS: { label: string; value: EventType | null }[] = [
+const OSTALO_TYPES: Set<EventType> = new Set(["kontrolna", "kviz", "laboratorij", "predaja", "zadavanje", "domaca_zadaca"]);
+
+const TYPE_FILTERS: { label: string; value: EventType | "ostalo" | null }[] = [
   { label: "Sve", value: null },
   { label: "Kolokviji", value: "kolokvij" },
-  { label: "Kontrolne", value: "kontrolna" },
   { label: "Ispiti", value: "ispit" },
   { label: "Obrane", value: "obrana" },
-  { label: "Kvizovi", value: "kviz" },
+  { label: "Ostalo", value: "ostalo" },
 ];
 
 export function CalendarView() {
@@ -51,6 +52,7 @@ export function CalendarView() {
   // Apply filters to non-ispit events
   const filtered = nonIspit.filter(d => {
     if (courseFilter && d.subjectId !== courseFilter) return false;
+    if (typeFilter === "ostalo") return OSTALO_TYPES.has(d.type);
     if (typeFilter && d.type !== typeFilter) return false;
     return true;
   });

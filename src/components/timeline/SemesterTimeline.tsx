@@ -394,11 +394,9 @@ export function SemesterTimeline({
           >
             {([
               ["kolokvij", "Kolokvij"],
-              ["kontrolna", "Kontrolna"],
               ["ispit", "Ispit"],
               ["obrana", "Obrana"],
-              ["kviz", "Kviz"],
-              ["domaca_zadaca", "Domaća zadaća"],
+              ["kontrolna", "Ostalo"],
             ] as const).map(([type, label]) => (
               <div
                 key={type}
