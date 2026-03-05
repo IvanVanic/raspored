@@ -5,7 +5,7 @@ import { curriculum } from "@/data/curriculum";
 import { subjectMap, data } from "@/data/schedule";
 import { extractCriticalDates } from "@/lib/extraction";
 import { formatHrDate, daysUntil } from "@/lib/date-utils";
-import { TYPE_LABEL, TYPE_CATEGORY, EVENT_COLOR, TEST_TYPES } from "@/lib/labels";
+import { TYPE_LABEL, TYPE_CATEGORY, EVENT_COLOR, TEST_TYPES, getCourseColor } from "@/lib/labels";
 import type { CurriculumEntry, CriticalDate, EventType } from "@/data/types";
 import { Dropdown } from "@/components/shared/Dropdown";
 
@@ -220,6 +220,7 @@ function Section({
 function EventRow({ event, compact, onTestTap }: { event: CriticalDate; compact?: boolean; onTestTap?: (event: CriticalDate) => void }) {
   const isTest = TEST_TYPES.has(event.type);
   const subj = subjectMap.get(event.subjectId);
+  const cc = getCourseColor(event.subjectId);
   const days = event.date ? daysUntil(event.date) : null;
   const isSoon = days !== null && days >= 0 && days <= 7;
   const isToday = days === 0;
@@ -258,7 +259,7 @@ function EventRow({ event, compact, onTestTap }: { event: CriticalDate; compact?
           <span className="text-[12px] font-semibold text-foreground leading-tight shrink-0">
             {TYPE_LABEL[event.type]}
           </span>
-          <span className="text-[11px] text-muted-fg leading-tight truncate">
+          <span className="text-[11px] font-medium leading-tight truncate" style={{ color: cc.text, opacity: 0.8 }}>
             {subj?.short_name ?? event.subjectId}
           </span>
           {event.date && (

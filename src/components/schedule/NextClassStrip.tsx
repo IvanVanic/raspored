@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { subjectMap } from "@/data/schedule";
+import { getCourseColor } from "@/lib/labels";
 import { getNextSlot } from "@/lib/schedule-utils";
 
 function parseTime(t: string): number {
@@ -30,7 +31,8 @@ export function NextClassStrip({
 
   const { slot, dayName, minutesUntil } = next;
   const subj = subjectMap.get(slot.subject_id);
-  const name = subj ? `${subj.short_name} ${slot.type}` : slot.subject_id;
+  const name = subj ? `${subj.short_name} (${slot.type})` : slot.subject_id;
+  const cc = getCourseColor(slot.subject_id);
   const jsDay = new Date().getDay();
   const isWeekday = jsDay >= 1 && jsDay <= 5;
   const todayIdx = isWeekday ? jsDay - 1 : -1;
@@ -60,7 +62,7 @@ export function NextClassStrip({
   return (
     <div
       className="flex items-center gap-3 px-4 py-2.5 border-b border-border-subtle cursor-pointer active:opacity-80 t-fast transition-opacity"
-      style={{ position: "relative", background: "color-mix(in srgb, var(--m-tint) 60%, var(--background))" }}
+      style={{ position: "relative", background: `color-mix(in srgb, ${cc.tint} 60%, var(--background))` }}
       onClick={() => onTap?.(slot)}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onTap?.(slot); } }}
       role="button"
@@ -68,9 +70,9 @@ export function NextClassStrip({
     >
       <span
         className="w-1.5 h-1.5 rounded-full shrink-0"
-        style={{ background: minutesUntil === 0 ? "var(--m-accent)" : "var(--muted-fg)" }}
+        style={{ background: minutesUntil === 0 ? cc.accent : cc.accent, opacity: minutesUntil === 0 ? 1 : 0.5 }}
       />
-      <span className="text-[13px] font-semibold text-foreground leading-none">
+      <span className="text-[13px] font-semibold leading-none" style={{ color: cc.text }}>
         {name}
       </span>
       <span className="text-[12px] text-muted-fg leading-none">
@@ -78,7 +80,7 @@ export function NextClassStrip({
       </span>
       <span
         className="ml-auto text-[11px] font-semibold tabular-nums"
-        style={{ color: minutesUntil === 0 ? "var(--m-text)" : "var(--muted-fg)" }}
+        style={{ color: minutesUntil === 0 ? cc.text : "var(--muted-fg)" }}
       >
         {timeLabel}
       </span>
@@ -90,7 +92,7 @@ export function NextClassStrip({
             left: 0,
             height: "2px",
             width: `${progress * 100}%`,
-            background: "var(--m-accent)",
+            background: cc.accent,
             transition: "width 1s linear",
           }}
         />
