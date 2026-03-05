@@ -168,7 +168,7 @@ export function CourseModal({ slot, subjectId: propSubjectId, initialTab, initia
             )}
             {slot?.group && (
               <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-muted text-muted-fg">
-                G{slot.group}
+                {slot.group}
               </span>
             )}
             {slot && (

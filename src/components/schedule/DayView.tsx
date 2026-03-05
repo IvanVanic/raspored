@@ -95,7 +95,7 @@ export function DayView({
             key={day}
             onClick={() => setDayIdx(i)}
             className={[
-              "flex-1 py-3 text-[11px] font-semibold tracking-[0.06em] uppercase t-fast transition-[color,box-shadow]",
+              "flex-1 py-3.5 text-[11px] font-bold tracking-[0.06em] uppercase t-fast transition-[color,box-shadow]",
               i === dayIdx
                 ? "day-tab-active text-foreground"
                 : "text-muted-fg hover:text-foreground",
@@ -108,7 +108,7 @@ export function DayView({
 
       {/* Swipeable content */}
       <div
-        className="px-4 pt-3 pb-4"
+        className="px-4 pt-4 pb-6"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -117,20 +117,20 @@ export function DayView({
             <p>Nema nastave</p>
           </div>
         ) : (
-          <div className="space-y-1.5">
+          <div className="space-y-2.5">
             {slots.map((slot, i) => {
               const topic = getSlotTopic(slot.subject_id, slot.type as "P" | "V", currentWeek);
               return (
                 <div key={`${dayIdx}-${i}`} className="flex gap-0">
-                  <div className="w-14 shrink-0 pt-2.5 pr-3 text-right border-r border-border-subtle">
-                    <div className="text-[11px] font-semibold text-foreground tabular-nums leading-none">
+                  <div className="w-16 shrink-0 pt-3 pr-3 text-right border-r border-border-subtle">
+                    <div className="text-[12px] font-bold text-foreground tabular-nums leading-none">
                       {slot.start}
                     </div>
-                    <div className="text-[10px] text-muted-fg/50 tabular-nums leading-none mt-1">
+                    <div className="text-[11px] text-muted-fg/40 tabular-nums leading-none mt-1.5">
                       {slot.end}
                     </div>
                   </div>
-                  <div className="flex-1 pl-2 min-w-0">
+                  <div className="flex-1 pl-3 min-w-0">
                     <SlotCard
                       slot={slot}
                       showProf

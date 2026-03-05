@@ -55,7 +55,7 @@ export function DesktopGrid({ onSlotClick }: { onSlotClick: (slot: Slot) => void
           </thead>
           <tbody>
             {timeSlots.map((ts) => (
-              <tr key={ts.start} className="h-[64px]">
+              <tr key={ts.start} className="h-[72px]">
                 <td className="time-col p-2.5 align-top">
                   <div className="text-[11px] font-semibold text-foreground tabular-nums leading-none">
                     {ts.start}

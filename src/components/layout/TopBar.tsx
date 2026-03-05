@@ -34,10 +34,10 @@ export function TopBar({
     >
       <div className="px-4 py-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-[13px] font-bold tracking-[-0.02em] text-foreground leading-none">
+          <h1 className="text-[15px] font-bold tracking-[-0.02em] text-foreground leading-none">
             {view === "raspored" ? "Raspored" : "Rokovi"}
           </h1>
-          <p className="text-[11px] text-muted-fg mt-0.5 tracking-[0.01em]">
+          <p className="text-[11px] text-muted-fg mt-1 tracking-[0.01em]">
             {todayString()} &middot; FIDIT 25./26.
           </p>
         </div>

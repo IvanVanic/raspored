@@ -20,7 +20,8 @@ export function SlotCard({
   topic?: string;
 }) {
   const subj = subjectMap.get(slot.subject_id);
-  const label = subj ? `${subj.short_name} (${subj.semester})` : slot.subject_id;
+  const label = subj ? subj.short_name : slot.subject_id;
+  const semLabel = subj ? subj.semester : "";
   const isExercise = slot.type === "V";
   const base = slot.status === "M" ? "slot-card-m" : "slot-card-e";
   const isM = slot.status === "M";
@@ -38,12 +39,17 @@ export function SlotCard({
       className={`${base}${isExercise ? " exercise" : ""}${timeStatus === "now" ? " slot-now" : ""} slot-cell cursor-pointer active:scale-[0.985] t-base transition-[filter,transform] group`}
     >
       {/* Row 1: Subject label + badges */}
-      <div className="flex items-center gap-1.5 min-w-0">
+      <div className="flex items-center gap-2 min-w-0">
         <span
-          className={`${isM ? "slot-subject-m" : "slot-subject-e"} text-[12px] font-semibold leading-none tracking-[-0.01em] truncate`}
+          className={`${isM ? "slot-subject-m" : "slot-subject-e"} text-[13px] font-bold leading-none tracking-[-0.01em] truncate`}
         >
           {label}
         </span>
+        {semLabel && (
+          <span className="text-[10px] text-muted-fg/50 font-medium leading-none shrink-0">
+            {semLabel}
+          </span>
+        )}
         {urgencyColor && (
           <span
             className="urgency-dot shrink-0"
@@ -63,18 +69,18 @@ export function SlotCard({
       {/* Row 2: Topic — single line, hard truncated */}
       {topic && (
         <div
-          className="mt-[3px] text-[11px] leading-none truncate"
-          style={{ color: isM ? "var(--m-text)" : "var(--e-text)", opacity: 0.8 }}
+          className="mt-1.5 text-[12px] leading-snug truncate"
+          style={{ color: isM ? "var(--m-text)" : "var(--e-text)", opacity: 0.75 }}
         >
           {topic}
         </div>
       )}
 
-      {/* Row 3: Meta — room · type · prof */}
-      <div className="mt-[3px] text-muted-fg text-[10px] leading-none flex items-center gap-0 opacity-70 group-hover:opacity-90 t-fast transition-opacity">
-        <span className="font-medium tabular-nums">{slot.room}</span>
+      {/* Row 3: Meta — type + group · room · prof */}
+      <div className="mt-1.5 text-muted-fg text-[11px] leading-none flex items-center gap-0 opacity-60 group-hover:opacity-90 t-fast transition-opacity">
+        <span className="font-medium">{slot.type === "P" ? "Pred." : "Vježbe"}{slot.group ? ` ${slot.group}` : ""}</span>
         <MetaSep />
-        <span>{slot.type === "P" ? "Predavanje" : "Vježbe"}{slot.group ? ` · G${slot.group}` : ""}</span>
+        <span className="font-medium tabular-nums">{slot.room}</span>
         {showProf && slot.prof && (
           <>
             <MetaSep />

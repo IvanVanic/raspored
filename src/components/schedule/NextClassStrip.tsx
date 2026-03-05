@@ -59,7 +59,7 @@ export function NextClassStrip({
 
   return (
     <div
-      className="flex items-center gap-3 px-4 py-2 border-b border-border-subtle cursor-pointer active:opacity-80 t-fast transition-opacity"
+      className="flex items-center gap-3 px-4 py-2.5 border-b border-border-subtle cursor-pointer active:opacity-80 t-fast transition-opacity"
       style={{ position: "relative", background: "color-mix(in srgb, var(--m-tint) 60%, var(--background))" }}
       onClick={() => onTap?.(slot)}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onTap?.(slot); } }}
@@ -70,10 +70,10 @@ export function NextClassStrip({
         className="w-1.5 h-1.5 rounded-full shrink-0"
         style={{ background: minutesUntil === 0 ? "var(--m-accent)" : "var(--muted-fg)" }}
       />
-      <span className="text-[12px] font-semibold text-foreground leading-none">
+      <span className="text-[13px] font-semibold text-foreground leading-none">
         {name}
       </span>
-      <span className="text-[11px] text-muted-fg leading-none">
+      <span className="text-[12px] text-muted-fg leading-none">
         {slot.room}
       </span>
       <span
