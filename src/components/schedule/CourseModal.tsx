@@ -25,8 +25,9 @@ interface CourseModalProps {
 
 export function CourseModal({ slot, subjectId: propSubjectId, initialTab, initialTestExpand, onClose }: CourseModalProps) {
   const effectiveSubjectId = slot?.subject_id ?? propSubjectId ?? "";
+  const curriculumId = effectiveSubjectId.toUpperCase();
   const subj = subjectMap.get(effectiveSubjectId);
-  const curr = curriculum[effectiveSubjectId];
+  const curr = curriculum[curriculumId];
   const currentWeek = getCurrentWeek();
   const [tab, setTab] = useState<Tab>(initialTab ?? "sada");
   const planRef = useRef<HTMLDivElement>(null);
@@ -62,7 +63,7 @@ export function CourseModal({ slot, subjectId: propSubjectId, initialTab, initia
   };
 
   const criticalDates = curr
-    ? extractCriticalDates({ [effectiveSubjectId]: curr as CurriculumEntry })
+    ? extractCriticalDates({ [curriculumId]: curr as CurriculumEntry })
     : [];
   const allDates = extractCriticalDates(curriculum as Record<string, CurriculumEntry>);
   const nonIspit = criticalDates.filter(d => d.type !== "ispit");
