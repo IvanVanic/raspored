@@ -77,7 +77,7 @@ export function Dropdown({ options, value, onChange, placeholder = "Sve" }: Drop
   }, [open, focusedIndex, allItems, close, select]);
 
   return (
-    <div ref={containerRef} style={{ position: "relative", display: "inline-block" }}>
+    <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
       {/* Trigger */}
       <button
         type="button"
@@ -95,13 +95,16 @@ export function Dropdown({ options, value, onChange, placeholder = "Sve" }: Drop
           background: "var(--muted)",
           border: "1px solid var(--border)",
           borderRadius: "8px",
-          padding: "7px 12px",
-          fontSize: "12px",
+          padding: "8px 14px 8px 12px",
+          fontSize: "13px",
           fontWeight: 600,
           color: selectedLabel ? "var(--foreground)" : "var(--muted-fg)",
           cursor: "pointer",
           outline: "none",
           whiteSpace: "nowrap",
+          minWidth: "180px",
+          width: "100%",
+          justifyContent: "space-between",
         }}
       >
         <span>{selectedLabel ?? placeholder}</span>
@@ -155,7 +158,7 @@ export function Dropdown({ options, value, onChange, placeholder = "Sve" }: Drop
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "7px 12px",
+                  padding: "9px 14px",
                   fontSize: "12px",
                   fontWeight: isSelected ? 600 : 400,
                   color: item.value === null ? "var(--muted-fg)" : "var(--foreground)",

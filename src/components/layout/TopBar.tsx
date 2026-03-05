@@ -38,7 +38,7 @@ export function TopBar({
             {view === "raspored" ? "Raspored" : "Rokovi"}
           </h1>
           <p className="text-[11px] text-muted-fg mt-0.5 tracking-[0.01em]">
-            {todayString()} &middot; FIDIT
+            {todayString()} &middot; FIDIT 25./26.
           </p>
         </div>
         <div className="flex items-center gap-2">

@@ -22,6 +22,7 @@ type TypeFilter = EventType | null; // null = all
 const TYPE_FILTERS: { label: string; value: EventType | null }[] = [
   { label: "Sve", value: null },
   { label: "Kolokviji", value: "kolokvij" },
+  { label: "Ispiti", value: "ispit" },
   { label: "Obrane", value: "obrana" },
   { label: "Kvizovi", value: "kviz" },
 ];
@@ -41,9 +42,10 @@ export function CalendarView() {
     []
   );
 
-  // Split ispit from everything else
-  const nonIspit = all.filter(d => d.type !== "ispit");
-  const ispiti = all.filter(d => d.type === "ispit");
+  // Split ispit based on whether we're filtering for them
+  const includeIspiti = typeFilter === "ispit";
+  const nonIspit = includeIspiti ? all : all.filter(d => d.type !== "ispit");
+  const ispiti = includeIspiti ? [] : all.filter(d => d.type === "ispit");
 
   // Apply filters to non-ispit events
   const filtered = nonIspit.filter(d => {
@@ -229,37 +231,38 @@ function EventRow({ event, compact }: { event: CriticalDate; compact?: boolean }
     <div
       className="event-row"
       style={{
+        padding: "7px 10px 7px 10px",
+        paddingLeft: "9px",
+        borderLeft: `3px solid ${EVENT_COLOR[event.type]}`,
         background: isSoon
           ? "color-mix(in srgb, var(--u-critical-tint) 90%, transparent)"
           : "var(--muted)",
         borderColor: isSoon
           ? "color-mix(in srgb, var(--u-critical) 20%, transparent)"
           : "transparent",
+        borderLeftColor: EVENT_COLOR[event.type],
         animation: "row-in 200ms var(--ease-out-expo) both",
       }}
     >
-      {/* Left: dot + text block */}
-      <span
-        className="urgency-dot mt-px shrink-0"
-        style={{ background: EVENT_COLOR[event.type] }}
-      />
+      {/* Text block — no dot, left accent bar handles color */}
       <div className="flex-1 min-w-0">
-        {/* Primary line: type label (bold) + course name */}
-        <div className="flex items-baseline gap-1.5 min-w-0">
-          <span className="text-[12px] font-semibold text-foreground leading-tight truncate">
+        {/* Single line: type label + course name + date + countdown all together */}
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-[12px] font-semibold text-foreground leading-tight shrink-0">
             {TYPE_LABEL[event.type]}
           </span>
-          <span className="text-[11px] text-muted-fg leading-tight truncate shrink-0">
+          <span className="text-[11px] text-muted-fg leading-tight truncate">
             {subj?.short_name ?? event.subjectId}
           </span>
+          {event.date && (
+            <span
+              className="text-[11px] tabular-nums leading-tight shrink-0 ml-auto pl-2"
+              style={{ color: isSoon ? "var(--u-approaching)" : "var(--muted-fg)" }}
+            >
+              {formatHrDate(event.date)}
+            </span>
+          )}
         </div>
-        {/* Secondary line: date */}
-        {event.date && (
-          <div className="text-[11px] tabular-nums leading-tight mt-0.5"
-            style={{ color: isSoon ? "var(--u-approaching)" : "var(--muted-fg)" }}>
-            {formatHrDate(event.date)}
-          </div>
-        )}
       </div>
 
       {/* Right: countdown badge */}
@@ -273,13 +276,14 @@ function EventRow({ event, compact }: { event: CriticalDate; compact?: boolean }
               : isSoon
               ? "color-mix(in srgb, var(--u-approaching) 10%, transparent)"
               : "var(--card)",
+            flexShrink: 0,
           }}
         >
           {daysLabel(days)}
         </span>
       )}
       {!event.date && (
-        <span className="event-countdown" style={{ color: "var(--muted-fg)", background: "var(--card)" }}>
+        <span className="event-countdown" style={{ color: "var(--muted-fg)", background: "var(--card)", flexShrink: 0 }}>
           T{event.week}
         </span>
       )}

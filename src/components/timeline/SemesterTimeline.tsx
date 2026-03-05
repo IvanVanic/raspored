@@ -119,68 +119,54 @@ function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGri
             <button
               key={key}
               onClick={() => onDaySelect(key, day)}
-              className={[
-                "calendar-cell",
-                today ? "calendar-today" : "",
-              ].join(" ")}
+              className={["calendar-cell", today ? "calendar-today" : ""].join(" ")}
               style={{
                 cursor: events.length > 0 ? "pointer" : "default",
-                textAlign: "left",
-                background: selected
-                  ? "color-mix(in srgb, var(--foreground) 8%, transparent)"
-                  : today
-                  ? undefined
-                  : undefined,
+                background: selected ? "color-mix(in srgb, var(--foreground) 8%, transparent)" : undefined,
                 outline: selected ? "1px solid var(--foreground)" : undefined,
                 outlineOffset: "-1px",
                 position: "relative",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2,
+                paddingTop: 3,
+                paddingBottom: 3,
               }}
             >
-              {/* Teaching week label for Monday cells */}
+              {/* Teaching week label */}
               {teachingWeek !== null && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: 2,
-                    right: 2,
-                    fontSize: 8,
-                    fontWeight: 700,
-                    letterSpacing: "0.02em",
-                    color: "var(--muted-fg)",
-                    lineHeight: 1,
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
+                <span style={{
+                  position: "absolute", top: 1, right: 2,
+                  fontSize: 8, fontWeight: 700, letterSpacing: "0.02em",
+                  color: "var(--muted-fg)", lineHeight: 1, fontVariantNumeric: "tabular-nums",
+                }}>
                   T{teachingWeek}
                 </span>
               )}
 
               {/* Date number */}
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: today ? 700 : 500,
-                  color: today ? "var(--m-text)" : "var(--foreground)",
-                  lineHeight: 1,
-                  display: "block",
-                  marginBottom: events.length > 0 ? 3 : 0,
-                }}
-              >
+              <span style={{
+                fontSize: 11,
+                fontWeight: today ? 700 : 500,
+                color: today ? "var(--m-text)" : "var(--foreground)",
+                lineHeight: 1,
+              }}>
                 {day.getDate()}
               </span>
 
-              {/* Event dots */}
-              {events.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-                  {events.slice(0, 4).map((event, i) => (
-                    <span
-                      key={i}
-                      className="calendar-event-dot"
-                      style={{ background: EVENT_COLOR[event.type] }}
-                    />
-                  ))}
-                </div>
-              )}
+              {/* Event dots — always takes space for consistent height */}
+              <div style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 2,
+                minHeight: 6,
+                flexWrap: "wrap",
+              }}>
+                {events.slice(0, 4).map((event, i) => (
+                  <span key={i} className="calendar-event-dot" style={{ background: EVENT_COLOR[event.type] }} />
+                ))}
+              </div>
             </button>
           );
         })}
@@ -406,14 +392,13 @@ export function SemesterTimeline({
               borderTop: "1px solid var(--border-subtle)",
             }}
           >
-            {(
-              [
-                ["kolokvij", "Kolokvij"],
-                ["ispit", "Ispit"],
-                ["predaja", "Predaja"],
-                ["laboratorij", "Laboratorij"],
-              ] as const
-            ).map(([type, label]) => (
+            {([
+              ["kolokvij", "Kolokvij"],
+              ["ispit", "Ispit"],
+              ["obrana", "Obrana"],
+              ["kviz", "Kviz"],
+              ["domaca_zadaca", "Domaća zadaća"],
+            ] as const).map(([type, label]) => (
               <div
                 key={type}
                 style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}

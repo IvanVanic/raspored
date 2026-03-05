@@ -63,10 +63,10 @@ const mat2 = {
     { lecture: "Ponavljanje i priprema za ispit",       exercise: "Rješavanje zadataka s prošlih ispita" },
   ]),
   grading: [
-    { component: "1. kolokvij", maxPoints: 35 },
-    { component: "2. kolokvij", maxPoints: 35 },
-    { component: "Seminar",     maxPoints: 15 },
-    { component: "Aktivnost",   maxPoints: 15 },
+    { component: "1. kolokvij", maxPoints: 30, note: "27.04.2026." },
+    { component: "2. kolokvij", maxPoints: 30, note: "25.05.2026." },
+    { component: "Seminar",     maxPoints: 10 },
+    { component: "Ispit",       maxPoints: 30 },
   ] satisfies GradingInfo[],
   exams: ["23.06.2026.", "07.07.2026.", "27.08.2026.", "10.09.2026."],
 } satisfies CurriculumEntry;
@@ -118,9 +118,10 @@ const ovis = {
     { lecture: "Ponavljanje i priprema za ispit",       exercise: "Rješavanje zadataka s prošlih ispita" },
   ]),
   grading: [
-    { component: "1. kolokvij", maxPoints: 40 },
-    { component: "2. kolokvij", maxPoints: 40 },
-    { component: "Aktivnost",   maxPoints: 20 },
+    { component: "1. kolokvij",   maxPoints: 30, note: "21.04.2026." },
+    { component: "2. kolokvij",   maxPoints: 30, note: "26.05.2026." },
+    { component: "Domaća zadaća", maxPoints: 10 },
+    { component: "Ispit",         maxPoints: 30 },
   ] satisfies GradingInfo[],
   exams: ["24.06.2026.", "08.07.2026.", "02.09.2026.", "08.09.2026."],
 } satisfies CurriculumEntry;
@@ -145,11 +146,11 @@ const uasp = {
     { lecture: "Završni pregled gradiva",               exercise: "Završni pregled" },
   ]),
   grading: [
-    { component: "Kolokvij",                  maxPoints: 30 },
-    { component: "Kviz",                      maxPoints: 10 },
-    { component: "Laboratorijske vježbe 1",   maxPoints: 15 },
-    { component: "Laboratorijske vježbe 2",   maxPoints: 15 },
-    { component: "Ispit",                     maxPoints: 30 },
+    { component: "Aktivnost na nastavi",   maxPoints: 6 },
+    { component: "Kviz",                   maxPoints: 20, note: "22.04.2026." },
+    { component: "Praktični kolokvij",     maxPoints: 20, note: "15.04.2026." },
+    { component: "Laboratorijske vježbe",  maxPoints: 24 },
+    { component: "Ispit",                  maxPoints: 30 },
   ] satisfies GradingInfo[],
   exams: ["18.06.2026.", "02.07.2026.", "01.09.2026.", "08.09.2026."],
 } satisfies CurriculumEntry;
@@ -174,10 +175,11 @@ const aor = {
     { lecture: "Ponavljanje i priprema za ispit",       exercise: "Rješavanje zadataka s prošlih ispita" },
   ]),
   grading: [
-    { component: "Kviz",              maxPoints: 20 },
-    { component: "Praktični kolokvij", maxPoints: 30 },
-    { component: "Aktivnost",         maxPoints: 20 },
-    { component: "Ispit",             maxPoints: 30 },
+    { component: "Domaće zadaće (6x)", maxPoints: 9,  note: "Online, 0–2 boda po zadaći" },
+    { component: "Kviz",               maxPoints: 26, note: "09.04.2026." },
+    { component: "Praktični kolokvij", maxPoints: 30, note: "14.05.2026." },
+    { component: "Aktivnost",          maxPoints: 5 },
+    { component: "Ispit",              maxPoints: 30 },
   ] satisfies GradingInfo[],
   exams: ["19.06.2026.", "03.07.2026.", "04.09.2026.", "11.09.2026."],
 } satisfies CurriculumEntry;
@@ -202,10 +204,11 @@ const oi = {
     { lecture: "Ponavljanje i priprema za ispit",       exercise: "Rješavanje zadataka s prošlih ispita" },
   ]),
   grading: [
-    { component: "1. kolokvij",    maxPoints: 25, note: "07.04.2026." },
-    { component: "2. kolokvij",    maxPoints: 25, note: "12.05.2026." },
-    { component: "Domaća zadaća",  maxPoints: 20 },
-    { component: "Ispit",          maxPoints: 30 },
+    { component: "Aktivnost na vježbama", maxPoints: 12 },
+    { component: "Domaće zadaće",         maxPoints: 18 },
+    { component: "1. kolokvij",           maxPoints: 20, note: "07.04.2026." },
+    { component: "2. kolokvij",           maxPoints: 20, note: "12.05.2026." },
+    { component: "Ispit",                 maxPoints: 30 },
   ] satisfies GradingInfo[],
   exams: ["26.06.2026.", "10.07.2026.", "04.09.2026.", "11.09.2026."],
 } satisfies CurriculumEntry;
@@ -230,10 +233,11 @@ const upw = {
     { lecture: "Ponavljanje i priprema za ispit",       exercise: "Rješavanje zadataka s prošlih ispita" },
   ]),
   grading: [
-    { component: "1. projekt", maxPoints: 15, note: "Obrana: 23.03.2026." },
-    { component: "2. projekt", maxPoints: 20, note: "Obrana: 20.04.2026." },
-    { component: "3. projekt", maxPoints: 30, note: "Obrana: 08.06.2026." },
-    { component: "Kolokvij",   maxPoints: 35, note: "25.05.2026." },
+    { component: "1. projekt",        maxPoints: 10, note: "Obrana: 23.03.2026." },
+    { component: "2. projekt",        maxPoints: 15, note: "Obrana: 20.04.2026." },
+    { component: "3. projekt",        maxPoints: 20, note: "Obrana: 08.06.2026." },
+    { component: "Kolokvij",          maxPoints: 25, note: "25.05.2026." },
+    { component: "Seminarski rad",    maxPoints: 30 },
   ] satisfies GradingInfo[],
   exams: ["16.06.2026.", "07.07.2026.", "03.09.2026.", "10.09.2026."],
 } satisfies CurriculumEntry;
