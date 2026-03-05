@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { data } from "@/data/schedule";
 import type { Slot } from "@/data/types";
 import { useTemporalContext } from "@/hooks/useTemporalContext";
@@ -21,6 +21,15 @@ export default function Home() {
   const [dayIdx, setDayIdx] = useState(temporal.smartDefaultDay);
   const [modalSlot, setModalSlot] = useState<Slot | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
+
+  // Sync dayIdx with correct smartDefaultDay after hydration
+  const hydrated = useRef(false);
+  useEffect(() => {
+    if (!hydrated.current) {
+      hydrated.current = true;
+      setDayIdx(temporal.smartDefaultDay);
+    }
+  }, [temporal.smartDefaultDay]);
 
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();

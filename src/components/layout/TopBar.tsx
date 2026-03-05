@@ -4,6 +4,16 @@ import { data } from "@/data/schedule";
 
 type View = "raspored" | "kalendar";
 
+const MONTH_GENITIVE = [
+  "siječnja", "veljače", "ožujka", "travnja", "svibnja", "lipnja",
+  "srpnja", "kolovoza", "rujna", "listopada", "studenoga", "prosinca",
+];
+
+function todayString(): string {
+  const now = new Date();
+  return `${now.getDate()}. ${MONTH_GENITIVE[now.getMonth()]} ${now.getFullYear()}.`;
+}
+
 export function TopBar({
   view,
   onViewChange,
@@ -28,7 +38,7 @@ export function TopBar({
             {view === "raspored" ? "Raspored" : "Rokovi"}
           </h1>
           <p className="text-[11px] text-muted-fg mt-0.5 tracking-[0.01em]">
-            FIDIT &middot; {year}
+            {todayString()} &middot; FIDIT
           </p>
         </div>
         <div className="flex items-center gap-2">

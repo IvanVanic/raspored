@@ -58,7 +58,7 @@ export function SlotCard({
 
       {/* Topic subtitle */}
       {topic && (
-        <div className="mt-0.5 text-[11px] leading-tight"
+        <div className="mt-0.5 text-[11px] leading-tight truncate"
           style={{ color: slot.status === "M" ? "var(--m-text)" : "var(--e-text)", opacity: 0.75 }}
         >
           {topic}
