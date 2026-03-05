@@ -16,8 +16,8 @@ function daysLabel(days: number): string {
   return `za ${days}d`;
 }
 
-type CourseFilter = string | null; // null = all
-type TypeFilter = EventType | "ostalo" | null; // null = all
+type CourseFilter = string | null;
+type TypeFilter = EventType | "ostalo" | null;
 
 const OSTALO_TYPES: Set<EventType> = new Set(["kontrolna", "kviz", "laboratorij", "predaja", "zadavanje", "domaca_zadaca"]);
 
@@ -44,12 +44,10 @@ export function CalendarView() {
     []
   );
 
-  // Split ispit based on whether we're filtering for them
   const includeIspiti = typeFilter === "ispit";
   const nonIspit = includeIspiti ? all : all.filter(d => d.type !== "ispit");
   const ispiti = includeIspiti ? [] : all.filter(d => d.type === "ispit");
 
-  // Apply filters to non-ispit events
   const filtered = nonIspit.filter(d => {
     if (courseFilter && d.subjectId !== courseFilter) return false;
     if (typeFilter === "ostalo") return OSTALO_TYPES.has(d.type);
@@ -60,17 +58,17 @@ export function CalendarView() {
   const upcoming = filtered.filter(d => !d.date || daysUntil(d.date) >= 0);
   const past = filtered.filter(d => d.date && daysUntil(d.date) < 0);
 
-  // Group upcoming into bands
   const thisWeek = upcoming.filter(d => d.date && daysUntil(d.date) <= 7);
   const soon = upcoming.filter(d => !d.date || (d.date && daysUntil(d.date) > 7 && daysUntil(d.date) <= 21));
   const later = upcoming.filter(d => d.date && daysUntil(d.date) > 21);
   const undated = upcoming.filter(d => !d.date);
 
+  const hasSections = thisWeek.length > 0 || soon.length > 0 || later.length > 0 || undated.length > 0;
+
   return (
     <div className="pb-6">
       {/* Filter row */}
       <div className="py-3 border-b border-border-subtle space-y-2.5">
-        {/* Course filter — dropdown */}
         <div className="px-4">
           <Dropdown
             options={courses.map(c => ({ value: c.id, label: c.short }))}
@@ -79,8 +77,6 @@ export function CalendarView() {
             placeholder="Svi kolegiji"
           />
         </div>
-
-        {/* Type filter — chips */}
         <div className="filter-chip-strip">
           {TYPE_FILTERS.map(f => (
             <button
@@ -95,38 +91,34 @@ export function CalendarView() {
         </div>
       </div>
 
-      <div className="px-4 pt-3 space-y-5">
-        {/* This week */}
+      <div className="px-4 pt-4 space-y-5">
         {thisWeek.length > 0 && (
-          <Section title="Ovaj tjedan" events={thisWeek} accent />
+          <Section title="Ovaj tjedan" events={thisWeek} urgency="critical" />
         )}
-
-        {/* Soon */}
         {soon.length > 0 && (
-          <Section title="Uskoro" events={soon} />
+          <Section title="Uskoro" events={soon} urgency="approaching" />
         )}
-
-        {/* Later */}
         {later.length > 0 && (
           <Section title="Kasnije" events={later} />
         )}
-
-        {/* Undated */}
         {undated.length > 0 && (
           <Section title="Bez datuma" events={undated} />
         )}
 
-        {/* Ispiti — always shown separately at bottom */}
+        {/* Ispiti — always at bottom */}
         {ispiti.length > 0 && (
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span
-                className="inline-block w-0.5 h-3 rounded-full shrink-0"
-                style={{ background: "var(--e-accent)" }}
-              />
+            {hasSections && (
+              <div style={{ height: 1, background: "var(--border-subtle)", marginBottom: 16 }} />
+            )}
+            <div className="flex items-center gap-2 mb-2.5">
+              <span className="inline-block w-[3px] h-3.5 rounded-full shrink-0" style={{ background: "var(--e-accent)" }} />
               <h3 className="text-[10px] font-semibold uppercase tracking-[0.07em] text-muted-fg">
                 Ispitni rokovi
               </h3>
+              <span className="text-[10px] font-semibold tabular-nums text-muted-fg opacity-60">
+                {ispiti.filter(d => !courseFilter || d.subjectId === courseFilter).filter(d => !d.date || daysUntil(d.date) >= 0).length}
+              </span>
             </div>
             <div className="space-y-1">
               {ispiti
@@ -153,16 +145,15 @@ export function CalendarView() {
         {past.length > 0 && (
           <div>
             <button
-              className="text-[11px] text-muted-fg hover:text-foreground t-fast transition-colors"
+              className="text-[11px] text-muted-fg hover:text-foreground t-fast transition-colors flex items-center gap-1.5"
               onClick={() => setShowPast(!showPast)}
             >
-              {showPast ? "▲ Sakrij prošlo" : `▼ Prikaži prošlo (${past.length})`}
+              <span style={{ fontSize: 9 }}>{showPast ? "▲" : "▼"}</span>
+              {showPast ? "Sakrij prošlo" : `Prošlo (${past.length})`}
             </button>
             {showPast && (
               <div className="mt-2 space-y-1 opacity-40">
-                {past.map((event, i) => (
-                  <EventRow key={`p-${i}`} event={event} />
-                ))}
+                {past.map((event, i) => <EventRow key={`p-${i}`} event={event} />)}
               </div>
             )}
           </div>
@@ -181,30 +172,36 @@ export function CalendarView() {
 function Section({
   title,
   events,
-  accent,
+  urgency,
 }: {
   title: string;
   events: CriticalDate[];
-  accent?: boolean;
+  urgency?: "critical" | "approaching";
 }) {
+  const accentColor = urgency === "critical"
+    ? "var(--u-critical)"
+    : urgency === "approaching"
+    ? "var(--u-approaching)"
+    : undefined;
+
   return (
     <div>
-      <div className="flex items-center gap-2 mb-2">
-        {accent && (
+      <div className="flex items-center gap-2 mb-2.5">
+        {accentColor && (
           <span
-            className="inline-block w-0.5 h-3 rounded-full shrink-0"
-            style={{ background: "var(--u-critical)" }}
+            className="inline-block w-[3px] h-3.5 rounded-full shrink-0"
+            style={{ background: accentColor }}
           />
         )}
         <h3
           className="text-[10px] font-semibold uppercase tracking-[0.07em]"
-          style={{ color: accent ? "var(--u-critical)" : "var(--muted-fg)" }}
+          style={{ color: accentColor ?? "var(--muted-fg)" }}
         >
           {title}
         </h3>
         <span
           className="text-[10px] font-semibold tabular-nums"
-          style={{ color: accent ? "var(--u-critical)" : "var(--muted-fg)", opacity: 0.6 }}
+          style={{ color: accentColor ?? "var(--muted-fg)", opacity: 0.6 }}
         >
           {events.length}
         </span>
@@ -223,6 +220,7 @@ function EventRow({ event, compact }: { event: CriticalDate; compact?: boolean }
   const days = event.date ? daysUntil(event.date) : null;
   const isSoon = days !== null && days >= 0 && days <= 7;
   const isToday = days === 0;
+  const isTomorrow = days === 1;
 
   const countdownColor = isToday
     ? "var(--u-critical)"
@@ -230,26 +228,27 @@ function EventRow({ event, compact }: { event: CriticalDate; compact?: boolean }
     ? "var(--u-approaching)"
     : "var(--muted-fg)";
 
+  const countdownBg = isToday
+    ? "color-mix(in srgb, var(--u-critical) 15%, transparent)"
+    : isTomorrow
+    ? "color-mix(in srgb, var(--u-approaching) 15%, transparent)"
+    : isSoon
+    ? "color-mix(in srgb, var(--u-approaching) 10%, transparent)"
+    : "var(--muted)";
+
   return (
     <div
       className="event-row"
       style={{
-        padding: "7px 10px 7px 10px",
-        paddingLeft: "9px",
+        paddingLeft: 9,
         borderLeft: `3px solid ${EVENT_COLOR[event.type]}`,
         background: isSoon
           ? "color-mix(in srgb, var(--u-critical-tint) 90%, transparent)"
           : "var(--muted)",
-        borderColor: isSoon
-          ? "color-mix(in srgb, var(--u-critical) 20%, transparent)"
-          : "transparent",
-        borderLeftColor: EVENT_COLOR[event.type],
         animation: "row-in 200ms var(--ease-out-expo) both",
       }}
     >
-      {/* Text block — no dot, left accent bar handles color */}
       <div className="flex-1 min-w-0">
-        {/* Single line: type label + course name + date + countdown all together */}
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="text-[12px] font-semibold text-foreground leading-tight shrink-0">
             {TYPE_LABEL[event.type]}
@@ -268,25 +267,25 @@ function EventRow({ event, compact }: { event: CriticalDate; compact?: boolean }
         </div>
       </div>
 
-      {/* Right: countdown badge */}
+      {/* Countdown badge — more prominent */}
       {days !== null && days >= 0 && (
         <span
           className="event-countdown"
           style={{
             color: countdownColor,
-            background: isToday
-              ? "color-mix(in srgb, var(--u-critical) 12%, transparent)"
-              : isSoon
-              ? "color-mix(in srgb, var(--u-approaching) 10%, transparent)"
-              : "var(--card)",
+            background: countdownBg,
             flexShrink: 0,
+            fontWeight: isSoon ? 800 : 700,
+            border: isSoon ? `1px solid ${countdownColor}33` : undefined,
+            minWidth: 44,
+            textAlign: "center",
           }}
         >
           {daysLabel(days)}
         </span>
       )}
       {!event.date && (
-        <span className="event-countdown" style={{ color: "var(--muted-fg)", background: "var(--card)", flexShrink: 0 }}>
+        <span className="event-countdown" style={{ color: "var(--muted-fg)", background: "var(--muted)", flexShrink: 0, minWidth: 36, textAlign: "center" }}>
           T{event.week}
         </span>
       )}

@@ -181,8 +181,8 @@ body {
 
 /* ── Slot cell sizing ─────────────────────────────────────────── */
 .slot-cell {
-  padding: 8px 10px;
-  min-height: 52px;
+  padding: 7px 10px;
+  min-height: 48px;
 }
 
 /* ── Day tab ──────────────────────────────────────────────────── */
@@ -400,7 +400,8 @@ body {
 .filter-chip[data-active="true"] {
   background: var(--card);
   color: var(--foreground);
-  border-color: var(--foreground);
+  border-color: color-mix(in srgb, var(--foreground) 60%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--foreground) 15%, transparent);
 }
 
 /* ── Null state ──────────────────────────────────────────────── */
@@ -467,6 +468,13 @@ body {
 
 .calendar-today {
   background: color-mix(in srgb, var(--m-accent) 8%, transparent);
+}
+
+.calendar-selected {
+  background: color-mix(in srgb, var(--foreground) 9%, transparent);
+  outline: 1.5px solid var(--foreground);
+  outline-offset: -1.5px;
+  border-radius: 2px;
 }
 
 .calendar-event-dot {

@@ -130,7 +130,7 @@ export function DayView({
                       {slot.end}
                     </div>
                   </div>
-                  <div className="flex-1 pl-2">
+                  <div className="flex-1 pl-2 min-w-0">
                     <SlotCard
                       slot={slot}
                       showProf

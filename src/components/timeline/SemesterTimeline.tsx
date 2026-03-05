@@ -8,22 +8,17 @@ import { SEMESTER_START, TOTAL_WEEKS, formatHrDate, getWeekForDate } from "@/lib
 import { TYPE_LABEL, EVENT_COLOR } from "@/lib/labels";
 import type { CurriculumEntry, CriticalDate } from "@/data/types";
 
-// ── Constants ────────────────────────────────────────────────────────────────
-
 const CROATIAN_MONTHS = ["Siječanj", "Veljača", "Ožujak", "Travanj", "Svibanj", "Lipanj",
   "Srpanj", "Kolovoz", "Rujan", "Listopad", "Studeni", "Prosinac"];
 
 const WEEKDAY_HEADERS = ["P", "U", "S", "Č", "P", "S", "N"];
 
-// March–June 2026
 const CALENDAR_MONTHS: Array<{ year: number; month: number }> = [
-  { year: 2026, month: 2 },  // March   (JS: 0-indexed)
-  { year: 2026, month: 3 },  // April
-  { year: 2026, month: 4 },  // May
-  { year: 2026, month: 5 },  // June
+  { year: 2026, month: 2 },
+  { year: 2026, month: 3 },
+  { year: 2026, month: 4 },
+  { year: 2026, month: 5 },
 ];
-
-// ── Pure helpers ─────────────────────────────────────────────────────────────
 
 function isToday(date: Date): boolean {
   const now = new Date();
@@ -34,10 +29,6 @@ function isToday(date: Date): boolean {
   );
 }
 
-/**
- * Returns the teaching week number (1–TOTAL_WEEKS) for a Monday that falls
- * inside the semester, or null if the Monday is outside the semester window.
- */
 function getTeachingWeek(date: Date): number | null {
   const start = new Date(SEMESTER_START);
   const diff = date.getTime() - start.getTime();
@@ -46,12 +37,10 @@ function getTeachingWeek(date: Date): number | null {
   return null;
 }
 
-/** ISO weekday index: Monday = 0 … Sunday = 6 */
 function isoWeekday(date: Date): number {
   return (date.getDay() + 6) % 7;
 }
 
-/** "YYYY-MM-DD" key for a Date */
 function toKey(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -59,7 +48,6 @@ function toKey(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-/** All days in a calendar month as Date objects */
 function monthDays(year: number, month: number): Date[] {
   const days: Date[] = [];
   const date = new Date(year, month, 1);
@@ -69,8 +57,6 @@ function monthDays(year: number, month: number): Date[] {
   }
   return days;
 }
-
-// ── Sub-components ────────────────────────────────────────────────────────────
 
 interface MonthGridProps {
   year: number;
@@ -82,27 +68,24 @@ interface MonthGridProps {
 
 function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGridProps) {
   const days = monthDays(year, month);
-  const firstWeekday = isoWeekday(days[0]); // leading blank cells
+  const firstWeekday = isoWeekday(days[0]);
 
   return (
-    <div className="mb-4">
-      {/* Month header */}
-      <div className="calendar-month-header px-1">
+    <div className="mb-5">
+      <div
+        className="calendar-month-header px-0"
+        style={{ paddingTop: 10, paddingBottom: 8, letterSpacing: "-0.01em" }}
+      >
         {CROATIAN_MONTHS[month]} {year}
       </div>
 
-      {/* Weekday labels row */}
       <div className="calendar-grid">
         {WEEKDAY_HEADERS.map((label, i) => (
-          <div key={i} className="calendar-weekday-header">
-            {label}
-          </div>
+          <div key={i} className="calendar-weekday-header">{label}</div>
         ))}
       </div>
 
-      {/* Day cells */}
       <div className="calendar-grid">
-        {/* Leading empty cells to align first day */}
         {Array.from({ length: firstWeekday }, (_, i) => (
           <div key={`empty-${i}`} className="calendar-cell" />
         ))}
@@ -112,34 +95,46 @@ function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGri
           const events = eventMap.get(key) ?? [];
           const today = isToday(day);
           const selected = selectedKey === key;
+          const hasEvents = events.length > 0;
           const weekday = isoWeekday(day);
           const teachingWeek = weekday === 0 ? getTeachingWeek(day) : null;
+          const isWeekend = weekday >= 5;
 
           return (
             <button
               key={key}
               onClick={() => onDaySelect(key, day)}
-              className={["calendar-cell", today ? "calendar-today" : ""].join(" ")}
+              className={[
+                "calendar-cell",
+                today ? "calendar-today" : "",
+                selected ? "calendar-selected" : "",
+              ].join(" ")}
               style={{
-                cursor: events.length > 0 ? "pointer" : "default",
-                background: selected ? "color-mix(in srgb, var(--foreground) 8%, transparent)" : undefined,
-                outline: selected ? "1px solid var(--foreground)" : undefined,
-                outlineOffset: "-1px",
+                cursor: hasEvents ? "pointer" : "default",
                 position: "relative",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
+                justifyContent: "flex-start",
                 gap: 2,
-                paddingTop: 3,
-                paddingBottom: 3,
+                paddingTop: 4,
+                paddingBottom: 4,
+                opacity: isWeekend && !hasEvents ? 0.4 : 1,
               }}
             >
               {/* Teaching week label */}
               {teachingWeek !== null && (
                 <span style={{
-                  position: "absolute", top: 1, right: 2,
-                  fontSize: 8, fontWeight: 700, letterSpacing: "0.02em",
-                  color: "var(--muted-fg)", lineHeight: 1, fontVariantNumeric: "tabular-nums",
+                  position: "absolute",
+                  top: 1,
+                  right: 2,
+                  fontSize: 7,
+                  fontWeight: 700,
+                  letterSpacing: "0.02em",
+                  color: "var(--muted-fg)",
+                  lineHeight: 1,
+                  fontVariantNumeric: "tabular-nums",
+                  opacity: 0.6,
                 }}>
                   T{teachingWeek}
                 </span>
@@ -147,25 +142,47 @@ function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGri
 
               {/* Date number */}
               <span style={{
-                fontSize: 11,
-                fontWeight: today ? 700 : 500,
-                color: today ? "var(--m-text)" : "var(--foreground)",
+                fontSize: 12,
+                fontWeight: today ? 700 : selected ? 600 : 500,
+                color: today
+                  ? "var(--m-text)"
+                  : selected
+                  ? "var(--foreground)"
+                  : "var(--foreground)",
                 lineHeight: 1,
               }}>
                 {day.getDate()}
               </span>
 
-              {/* Event dots — always takes space for consistent height */}
+              {/* Event dots */}
               <div style={{
                 display: "flex",
                 justifyContent: "center",
                 gap: 2,
-                minHeight: 6,
-                flexWrap: "wrap",
+                minHeight: 7,
+                flexWrap: "nowrap",
+                overflow: "hidden",
               }}>
-                {events.slice(0, 4).map((event, i) => (
-                  <span key={i} className="calendar-event-dot" style={{ background: EVENT_COLOR[event.type] }} />
+                {events.slice(0, 3).map((event, i) => (
+                  <span
+                    key={i}
+                    className="calendar-event-dot"
+                    style={{
+                      background: EVENT_COLOR[event.type],
+                      width: 5,
+                      height: 5,
+                      boxShadow: selected ? `0 0 4px ${EVENT_COLOR[event.type]}99` : undefined,
+                    }}
+                  />
                 ))}
+                {events.length > 3 && (
+                  <span style={{
+                    fontSize: 7,
+                    color: "var(--muted-fg)",
+                    lineHeight: "5px",
+                    fontWeight: 700,
+                  }}>+</span>
+                )}
               </div>
             </button>
           );
@@ -175,91 +192,108 @@ function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGri
   );
 }
 
-// ── Event detail panel ────────────────────────────────────────────────────────
-
 interface EventDetailPanelProps {
   selectedDate: Date;
   events: CriticalDate[];
   currentWeek: number;
+  onClose: () => void;
 }
 
-function EventDetailPanel({ selectedDate, events, currentWeek }: EventDetailPanelProps) {
+function EventDetailPanel({ selectedDate, events, currentWeek, onClose }: EventDetailPanelProps) {
   const week = getWeekForDate(selectedDate);
   const isCurrentWeek = week === currentWeek;
 
   return (
     <div
       style={{
-        margin: "0 0 8px 0",
-        padding: "10px 12px",
-        background: "var(--card)",
+        margin: "0 0 12px 0",
+        borderRadius: 10,
+        overflow: "hidden",
         border: "1px solid var(--border)",
-        borderRadius: 8,
+        background: "var(--card)",
+        animation: "row-in 150ms var(--ease-out-expo) both",
       }}
     >
       {/* Panel header */}
-      <p
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          color: "var(--muted-fg)",
-          marginBottom: 6,
-          letterSpacing: "0.04em",
-          textTransform: "uppercase",
-        }}
+      <div
+        className="flex items-center justify-between px-3 py-2"
+        style={{ borderBottom: "1px solid var(--border-subtle)", background: "var(--muted)" }}
       >
-        {formatHrDate(selectedDate)}
-        {isCurrentWeek && (
-          <span style={{ color: "var(--m-text)", marginLeft: 6, fontWeight: 600, textTransform: "none" }}>
-            · Tjedan {week} (trenutni)
+        <div className="flex items-center gap-2">
+          <span className="text-[12px] font-semibold text-foreground tabular-nums">
+            {formatHrDate(selectedDate)}
           </span>
-        )}
-        {!isCurrentWeek && (
-          <span style={{ color: "var(--muted-fg)", marginLeft: 6, fontWeight: 500, textTransform: "none" }}>
-            · Tjedan {week}
+          <span
+            className="text-[10px] font-semibold px-1.5 py-0.5 rounded tabular-nums"
+            style={{
+              background: isCurrentWeek
+                ? "color-mix(in srgb, var(--m-accent) 20%, transparent)"
+                : "transparent",
+              color: isCurrentWeek ? "var(--m-text)" : "var(--muted-fg)",
+            }}
+          >
+            T{week}{isCurrentWeek ? " · Sada" : ""}
           </span>
-        )}
-      </p>
-
-      {events.length === 0 ? (
-        <p style={{ fontSize: 11, color: "var(--muted-fg)" }}>Nema rokova na ovaj datum.</p>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          {events.map((event, i) => {
-            const subj = subjectMap.get(event.subjectId);
-            const urgencyColor =
-              event.urgency === "critical"
-                ? "var(--u-critical)"
-                : event.urgency === "approaching"
-                ? "var(--u-approaching)"
-                : "var(--muted-fg)";
-
-            return (
-              <div
-                key={i}
-                style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}
-              >
-                <span
-                  className="urgency-dot"
-                  style={{ background: urgencyColor, flexShrink: 0 }}
-                />
-                <span style={{ color: "var(--foreground)", fontWeight: 600 }}>
-                  {subj?.short_name ?? event.subjectId}
-                </span>
-                <span style={{ color: "var(--muted-fg)" }}>
-                  {TYPE_LABEL[event.type]}
-                  {event.date ? ` · ${formatHrDate(event.date)}` : ""}
-                </span>
-              </div>
-            );
-          })}
         </div>
-      )}
+        <button
+          onClick={onClose}
+          className="text-muted-fg hover:text-foreground t-fast transition-colors"
+          style={{ fontSize: 16, lineHeight: 1, padding: "2px 4px" }}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Event list */}
+      <div className="px-3 py-2.5">
+        {events.length === 0 ? (
+          <p className="text-[11px] text-muted-fg">Nema rokova na ovaj datum.</p>
+        ) : (
+          <div className="space-y-2">
+            {events.map((event, i) => {
+              const subj = subjectMap.get(event.subjectId);
+              return (
+                <div
+                  key={i}
+                  className="flex items-start gap-2.5"
+                  style={{
+                    paddingLeft: 9,
+                    borderLeft: `3px solid ${EVENT_COLOR[event.type]}`,
+                  }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[12px] font-semibold text-foreground">
+                        {TYPE_LABEL[event.type]}
+                      </span>
+                      <span className="text-[11px] text-muted-fg truncate">
+                        {subj?.short_name ?? event.subjectId}
+                      </span>
+                    </div>
+                    {subj?.full_name && (
+                      <p className="text-[10px] text-muted-fg mt-0.5 truncate opacity-70">
+                        {subj.full_name}
+                      </p>
+                    )}
+                  </div>
+                  <span
+                    className="text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 tabular-nums"
+                    style={{
+                      background: `color-mix(in srgb, ${EVENT_COLOR[event.type]} 15%, transparent)`,
+                      color: EVENT_COLOR[event.type],
+                    }}
+                  >
+                    {TYPE_LABEL[event.type].toUpperCase().slice(0, 3)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
-// ── Main component ────────────────────────────────────────────────────────────
 
 export function SemesterTimeline({
   currentWeek,
@@ -273,7 +307,6 @@ export function SemesterTimeline({
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  // Build a date-keyed event map from all critical dates that have an exact date
   const eventMap = useMemo<Map<string, CriticalDate[]>>(() => {
     const dates = extractCriticalDates(curriculum as Record<string, CurriculumEntry>);
     const map = new Map<string, CriticalDate[]>();
@@ -290,7 +323,6 @@ export function SemesterTimeline({
 
   const handleDaySelect = (key: string, date: Date) => {
     if (selectedKey === key) {
-      // Deselect on second tap
       setSelectedKey(null);
       setSelectedDate(null);
     } else {
@@ -299,18 +331,17 @@ export function SemesterTimeline({
     }
   };
 
+  const closeDetail = () => {
+    setSelectedKey(null);
+    setSelectedDate(null);
+  };
+
   const selectedEvents = selectedKey ? (eventMap.get(selectedKey) ?? []) : [];
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="modal-backdrop"
-        onClick={onClose}
-        style={{ zIndex: 45 }}
-      />
+      <div className="modal-backdrop" onClick={onClose} style={{ zIndex: 45 }} />
 
-      {/* Bottom sheet */}
       <div
         className="modal-content"
         style={{
@@ -331,41 +362,35 @@ export function SemesterTimeline({
           overflow: "hidden",
         }}
       >
-        {/* Handle bar */}
-        <div className="flex justify-center pt-3 pb-1" style={{ flexShrink: 0 }}>
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-2" style={{ flexShrink: 0 }}>
           <div className="w-10 h-1 rounded-full bg-muted-fg/30" />
         </div>
 
         {/* Title row */}
-        <div
-          className="flex items-center justify-between px-4 pb-2"
-          style={{ flexShrink: 0 }}
-        >
-          <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-muted-fg">
-            Kalendar semestra
-          </span>
+        <div className="flex items-center justify-between px-4 pb-3" style={{ flexShrink: 0 }}>
+          <div>
+            <span className="text-[13px] font-bold text-foreground">Semestar</span>
+            <span className="text-[11px] text-muted-fg ml-2 uppercase tracking-[0.06em]">Ožujak &ndash; Lipanj 2026</span>
+          </div>
           <button
             onClick={onClose}
-            className="text-[11px] text-muted-fg hover:text-foreground t-fast transition-colors"
+            className="text-[11px] font-semibold text-muted-fg hover:text-foreground t-fast transition-colors px-2 py-1 rounded-md hover:bg-muted"
           >
-            zatvori
+            Zatvori
           </button>
         </div>
 
-        {/* Scrollable content area */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: "0 16px 24px",
-          }}
-        >
-          {/* Event detail panel — shown above months when a day is selected */}
+        {/* Scrollable area */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "0 16px 32px" }}>
+
+          {/* Event detail panel */}
           {selectedKey && selectedDate && (
             <EventDetailPanel
               selectedDate={selectedDate}
               events={selectedEvents}
               currentWeek={currentWeek}
+              onClose={closeDetail}
             />
           )}
 
@@ -386,9 +411,9 @@ export function SemesterTimeline({
             style={{
               display: "flex",
               flexWrap: "wrap",
-              gap: "8px 16px",
+              gap: "8px 18px",
               marginTop: 8,
-              paddingTop: 8,
+              paddingTop: 10,
               borderTop: "1px solid var(--border-subtle)",
             }}
           >
@@ -398,29 +423,35 @@ export function SemesterTimeline({
               ["obrana", "Obrana"],
               ["kontrolna", "Ostalo"],
             ] as const).map(([type, label]) => (
-              <div
-                key={type}
-                style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}
-              >
+              <div key={type} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
                 <span
                   className="calendar-event-dot"
-                  style={{ background: EVENT_COLOR[type] }}
+                  style={{ background: EVENT_COLOR[type], width: 6, height: 6 }}
                 />
                 <span style={{ color: "var(--muted-fg)", fontWeight: 500 }}>{label}</span>
               </div>
             ))}
             <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
-              <span
-                style={{
-                  width: 12,
-                  height: 10,
-                  borderRadius: 2,
-                  background: "color-mix(in srgb, var(--m-accent) 8%, transparent)",
-                  display: "inline-block",
-                  border: "1px solid color-mix(in srgb, var(--m-accent) 30%, transparent)",
-                }}
-              />
+              <span style={{
+                width: 13,
+                height: 11,
+                borderRadius: 3,
+                background: "color-mix(in srgb, var(--m-accent) 10%, transparent)",
+                display: "inline-block",
+                border: "1px solid color-mix(in srgb, var(--m-accent) 35%, transparent)",
+              }} />
               <span style={{ color: "var(--muted-fg)", fontWeight: 500 }}>Danas</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
+              <span style={{
+                width: 13,
+                height: 11,
+                borderRadius: 3,
+                display: "inline-block",
+                border: "1.5px solid var(--foreground)",
+                background: "color-mix(in srgb, var(--foreground) 8%, transparent)",
+              }} />
+              <span style={{ color: "var(--muted-fg)", fontWeight: 500 }}>Odabrano</span>
             </div>
           </div>
         </div>

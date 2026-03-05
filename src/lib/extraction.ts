@@ -48,7 +48,15 @@ const KONTROLNA_RE = /\bkontroln[ae]\s+zadać[ae]\b/i;
 // Internal helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Negative patterns — these mention event keywords but are NOT actual events.
+ * e.g. "Ponavljanje i priprema za ispit", "Rješavanje zadataka s prošlih ispita"
+ */
+const PREP_RE = /\b(priprema\s+za|prošl|ponavljanje|završni\s+pregled)\b/i;
+
 function classifyText(text: string): EventType | null {
+  // Skip preparation/review weeks — they mention event keywords but aren't events
+  if (PREP_RE.test(text)) return null;
   if (KONTROLNA_RE.test(text)) return "kontrolna";
   if (KOLOKVIJ_RE.test(text)) return "kolokvij";
   if (OBRANA_RE.test(text)) return "obrana";
