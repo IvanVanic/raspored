@@ -4,10 +4,15 @@ import { useMemo, useRef } from "react";
 import type { Slot } from "@/data/types";
 import { data } from "@/data/schedule";
 import { curriculum } from "@/data/curriculum";
-import { getCurrentWeek } from "@/lib/date-utils";
+import { getCurrentWeek, SEMESTER_START } from "@/lib/date-utils";
 import { getSubjectUrgencies } from "@/lib/extraction";
 import { SlotCard } from "./SlotCard";
 import type { TimeStatus } from "./SlotCard";
+
+const MONTH_GENITIVE = [
+  "siječnja", "veljače", "ožujka", "travnja", "svibnja", "lipnja",
+  "srpnja", "kolovoza", "rujna", "listopada", "studenoga", "prosinca",
+];
 
 const DAY_ABBR: Record<string, string> = {
   Ponedjeljak: "PON",
@@ -67,6 +72,15 @@ export function DayView({
   const todayIdx = jsDay >= 1 && jsDay <= 5 ? jsDay - 1 : -1;
   const timeStatuses = getTimeStatuses(slots, dayIdx === todayIdx);
 
+  const dateString = (() => {
+    const base = new Date(SEMESTER_START);
+    base.setDate(base.getDate() + (currentWeek - 1) * 7 + dayIdx);
+    const dd = String(base.getDate()).padStart(2, "0");
+    const month = MONTH_GENITIVE[base.getMonth()];
+    const yyyy = base.getFullYear();
+    return `${dd}. ${month} ${yyyy}.`;
+  })();
+
   // Swipe handling
   const touchStartX = useRef<number | null>(null);
 
@@ -104,6 +118,13 @@ export function DayView({
             {DAY_ABBR[day]}
           </button>
         ))}
+      </div>
+
+      {/* Date subtitle */}
+      <div className="text-center py-1.5 border-b border-border-subtle">
+        <span className="text-[11px] text-muted-fg">
+          {dateString}
+        </span>
       </div>
 
       {/* Swipeable content */}

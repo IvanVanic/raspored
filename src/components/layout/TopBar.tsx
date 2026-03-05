@@ -60,8 +60,13 @@ export function TopBar({
           {currentWeek >= 1 && currentWeek <= 15 && (
             <button
               onClick={onWeekBadgeTap}
-              className="week-badge cursor-pointer hover:opacity-80 t-fast transition-opacity"
+              className="week-badge cursor-pointer hover:opacity-80 t-fast transition-opacity gap-1.5"
             >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="1.5" y="2.5" width="11" height="10" rx="1.5" />
+                <path d="M4.5 1v2.5M9.5 1v2.5M1.5 5.5h11" />
+                <path d="M1.5 8h11" opacity="0.4" />
+              </svg>
               T{currentWeek}/15
             </button>
           )}

@@ -4,12 +4,14 @@ import { useState, useEffect, useRef } from "react";
 import type { Slot, CurriculumEntry } from "@/data/types";
 import { subjectMap } from "@/data/schedule";
 import { curriculum } from "@/data/curriculum";
-import { getCurrentWeek, daysUntil, formatHrDate } from "@/lib/date-utils";
+import { getCurrentWeek, daysUntil, formatHrDate, getWeekDates, formatShortDate } from "@/lib/date-utils";
 import { extractCriticalDates } from "@/lib/extraction";
 import { TYPE_LABEL, EVENT_COLOR } from "@/lib/labels";
 import { useKeyboard } from "@/hooks/useKeyboard";
+import { resources } from "@/data/resources";
+import type { ResourceLink } from "@/data/resources";
 
-type Tab = "sada" | "plan" | "rokovi";
+type Tab = "sada" | "plan" | "rokovi" | "resursi";
 
 export function CourseModal({ slot, onClose }: { slot: Slot; onClose: () => void }) {
   const subj = subjectMap.get(slot.subject_id);
@@ -49,7 +51,14 @@ export function CourseModal({ slot, onClose }: { slot: Slot; onClose: () => void
     { id: "sada", label: "Sada" },
     { id: "plan", label: "Plan" },
     { id: "rokovi", label: "Rokovi" },
+    { id: "resursi", label: "Resursi" },
   ];
+
+  // Resources for current subject
+  const subjectResources = resources[slot.subject_id] ?? {};
+  const resourceWeeks = Object.keys(subjectResources)
+    .map(Number)
+    .sort((a, b) => a - b);
 
   return (
     <>
@@ -207,6 +216,11 @@ export function CourseModal({ slot, onClose }: { slot: Slot; onClose: () => void
                 const isCurrent = w.week === currentWeek;
                 const isPast = w.week < currentWeek;
                 const isLast = idx === curr.weeks.length - 1;
+                const { monday, friday } = getWeekDates(w.week);
+                const dateRange = `${formatShortDate(monday)}–${formatShortDate(friday)}`;
+                const lecture = w.lecture ?? "";
+                const exercise = w.exercise && w.exercise !== w.lecture ? w.exercise : "";
+                const combined = lecture.length + exercise.length < 60 && exercise.length > 0;
                 return (
                   <div
                     key={w.week}
@@ -254,6 +268,9 @@ export function CourseModal({ slot, onClose }: { slot: Slot; onClose: () => void
                         >
                           T{w.week}
                         </span>
+                        <span className="text-[9px] text-muted-fg tabular-nums" style={{ color: "var(--muted-fg)" }}>
+                          {dateRange}
+                        </span>
                         {isCurrent && (
                           <span
                             className="text-[9px] font-bold uppercase tracking-[0.08em] px-1.5 py-0.5 rounded"
@@ -270,25 +287,39 @@ export function CourseModal({ slot, onClose }: { slot: Slot; onClose: () => void
                       <div
                         className="rounded-md"
                         style={isCurrent ? {
-                          background: "var(--m-tint-strong)",
-                          border: "1px solid color-mix(in srgb, var(--m-accent) 30%, transparent)",
+                          background: "color-mix(in srgb, var(--m-tint-strong) 85%, var(--muted) 15%)",
+                          border: "2px solid color-mix(in srgb, var(--m-accent) 50%, transparent)",
                           padding: "8px 10px",
                           marginBottom: 4,
                         } : { paddingBottom: 2 }}
                       >
-                        <p
-                          className="text-[12px] leading-snug"
-                          style={{
-                            color: "var(--foreground)",
-                            fontWeight: isCurrent ? 600 : 400,
-                          }}
-                        >
-                          {w.lecture}
-                        </p>
-                        {w.exercise && w.exercise !== w.lecture && (
-                          <p className="text-[11px] mt-1" style={{ color: "var(--muted-fg)" }}>
-                            V: {w.exercise}
+                        {combined ? (
+                          <p
+                            className="text-[12px] leading-snug"
+                            style={{
+                              color: "var(--foreground)",
+                              fontWeight: isCurrent ? 600 : 400,
+                            }}
+                          >
+                            P: {lecture} · <span style={{ color: "var(--muted-fg)" }}>V: {exercise}</span>
                           </p>
+                        ) : (
+                          <>
+                            <p
+                              className="text-[12px] leading-snug"
+                              style={{
+                                color: "var(--foreground)",
+                                fontWeight: isCurrent ? 600 : 400,
+                              }}
+                            >
+                              {lecture}
+                            </p>
+                            {exercise && (
+                              <p className="text-[11px] mt-1" style={{ color: "var(--muted-fg)" }}>
+                                V: {exercise}
+                              </p>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
@@ -390,6 +421,91 @@ export function CourseModal({ slot, onClose }: { slot: Slot; onClose: () => void
                 <div className="null-state">
                   <p>Nema rokova za ovaj kolegij.</p>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* RESURSI */}
+          {tab === "resursi" && (
+            <div className="px-5 py-4 space-y-4">
+              {resourceWeeks.length === 0 ? (
+                <div className="null-state">
+                  <p>Nema resursa za ovaj kolegij.</p>
+                </div>
+              ) : (
+                resourceWeeks.map(weekNum => {
+                  const links: ResourceLink[] = subjectResources[weekNum] ?? [];
+                  const isCurrentWeek = weekNum === currentWeek;
+                  return (
+                    <div key={weekNum}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span
+                          className="text-[10px] font-bold uppercase tracking-[0.06em]"
+                          style={{ color: isCurrentWeek ? "var(--m-text)" : "var(--muted-fg)" }}
+                        >
+                          T{weekNum}
+                        </span>
+                        {isCurrentWeek && (
+                          <span
+                            className="text-[9px] font-bold uppercase tracking-[0.08em] px-1.5 py-0.5 rounded"
+                            style={{
+                              background: "color-mix(in srgb, var(--m-accent) 20%, transparent)",
+                              color: "var(--m-text)",
+                            }}
+                          >
+                            Sada
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        className="rounded-md overflow-hidden"
+                        style={{
+                          background: isCurrentWeek
+                            ? "color-mix(in srgb, var(--m-tint-strong) 85%, var(--muted) 15%)"
+                            : "var(--muted)",
+                          border: isCurrentWeek
+                            ? "2px solid color-mix(in srgb, var(--m-accent) 50%, transparent)"
+                            : "1px solid transparent",
+                        }}
+                      >
+                        {links.map((link, li) => (
+                          <a
+                            key={li}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="resource-link flex items-center justify-between gap-2 px-3 py-2 t-fast transition-colors"
+                            style={{
+                              borderTop: li > 0 ? "1px solid var(--border)" : undefined,
+                              color: "var(--foreground)",
+                              textDecoration: "none",
+                            }}
+                          >
+                            <span className="text-[12px] leading-snug min-w-0 truncate">
+                              {link.label}
+                            </span>
+                            <svg
+                              width="11"
+                              height="11"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="shrink-0 opacity-40"
+                              aria-hidden="true"
+                            >
+                              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                              <polyline points="15 3 21 3 21 9" />
+                              <line x1="10" y1="14" x2="21" y2="3" />
+                            </svg>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           )}

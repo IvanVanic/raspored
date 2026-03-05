@@ -7,6 +7,7 @@ import { extractCriticalDates } from "@/lib/extraction";
 import { formatHrDate, daysUntil } from "@/lib/date-utils";
 import { TYPE_LABEL, TYPE_CATEGORY, EVENT_COLOR } from "@/lib/labels";
 import type { CurriculumEntry, CriticalDate, EventType } from "@/data/types";
+import { Dropdown } from "@/components/shared/Dropdown";
 
 function daysLabel(days: number): string {
   if (days === 0) return "danas";
@@ -66,23 +67,12 @@ export function CalendarView() {
       <div className="py-3 border-b border-border-subtle space-y-2.5">
         {/* Course filter — dropdown */}
         <div className="px-4">
-          <div className="course-select-wrap">
-            <select
-              className="course-select"
-              value={courseFilter ?? ""}
-              onChange={e => setCourseFilter(e.target.value === "" ? null : e.target.value)}
-            >
-              <option value="">Svi kolegiji</option>
-              {courses.map(c => (
-                <option key={c.id} value={c.id}>{c.short}</option>
-              ))}
-            </select>
-            <span className="course-select-chevron" aria-hidden>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </span>
-          </div>
+          <Dropdown
+            options={courses.map(c => ({ value: c.id, label: c.short }))}
+            value={courseFilter}
+            onChange={setCourseFilter}
+            placeholder="Svi kolegiji"
+          />
         </div>
 
         {/* Type filter — chips */}

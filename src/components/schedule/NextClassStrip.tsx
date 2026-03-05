@@ -4,6 +4,11 @@ import { useMemo } from "react";
 import { subjectMap } from "@/data/schedule";
 import { getNextSlot } from "@/lib/schedule-utils";
 
+function parseTime(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+}
+
 const DAY_GENITIVE: Record<string, string> = {
   Ponedjeljak: "u ponedjeljak",
   Utorak: "u utorak",
@@ -48,10 +53,14 @@ export function NextClassStrip({
     timeLabel = `za ~${h}h`;
   }
 
+  const progress = minutesUntil === 0
+    ? Math.min(1, Math.max(0, (currentMinutes - parseTime(slot.start)) / (parseTime(slot.end) - parseTime(slot.start))))
+    : 0;
+
   return (
     <div
       className="flex items-center gap-3 px-4 py-2 border-b border-border-subtle cursor-pointer active:opacity-80 t-fast transition-opacity"
-      style={{ background: "color-mix(in srgb, var(--m-tint) 60%, var(--background))" }}
+      style={{ position: "relative", background: "color-mix(in srgb, var(--m-tint) 60%, var(--background))" }}
       onClick={() => onTap?.(slot)}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onTap?.(slot); } }}
       role="button"
@@ -73,6 +82,19 @@ export function NextClassStrip({
       >
         {timeLabel}
       </span>
+      {minutesUntil === 0 && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            height: "2px",
+            width: `${progress * 100}%`,
+            background: "var(--m-accent)",
+            transition: "width 1s linear",
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -3,11 +3,277 @@
 import { useState, useMemo } from "react";
 import { curriculum } from "@/data/curriculum";
 import { subjectMap } from "@/data/schedule";
-import { extractCriticalDates, getWeekHeat } from "@/lib/extraction";
-import { formatHrDate } from "@/lib/date-utils";
-import { TOTAL_WEEKS } from "@/lib/date-utils";
-import { TYPE_LABEL } from "@/lib/labels";
+import { extractCriticalDates } from "@/lib/extraction";
+import { SEMESTER_START, TOTAL_WEEKS, formatHrDate, getWeekForDate } from "@/lib/date-utils";
+import { TYPE_LABEL, EVENT_COLOR } from "@/lib/labels";
 import type { CurriculumEntry, CriticalDate } from "@/data/types";
+
+// ── Constants ────────────────────────────────────────────────────────────────
+
+const CROATIAN_MONTHS = ["Siječanj", "Veljača", "Ožujak", "Travanj", "Svibanj", "Lipanj",
+  "Srpanj", "Kolovoz", "Rujan", "Listopad", "Studeni", "Prosinac"];
+
+const WEEKDAY_HEADERS = ["P", "U", "S", "Č", "P", "S", "N"];
+
+// March–June 2026
+const CALENDAR_MONTHS: Array<{ year: number; month: number }> = [
+  { year: 2026, month: 2 },  // March   (JS: 0-indexed)
+  { year: 2026, month: 3 },  // April
+  { year: 2026, month: 4 },  // May
+  { year: 2026, month: 5 },  // June
+];
+
+// ── Pure helpers ─────────────────────────────────────────────────────────────
+
+function isToday(date: Date): boolean {
+  const now = new Date();
+  return (
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear()
+  );
+}
+
+/**
+ * Returns the teaching week number (1–TOTAL_WEEKS) for a Monday that falls
+ * inside the semester, or null if the Monday is outside the semester window.
+ */
+function getTeachingWeek(date: Date): number | null {
+  const start = new Date(SEMESTER_START);
+  const diff = date.getTime() - start.getTime();
+  const week = Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1;
+  if (week >= 1 && week <= TOTAL_WEEKS) return week;
+  return null;
+}
+
+/** ISO weekday index: Monday = 0 … Sunday = 6 */
+function isoWeekday(date: Date): number {
+  return (date.getDay() + 6) % 7;
+}
+
+/** "YYYY-MM-DD" key for a Date */
+function toKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/** All days in a calendar month as Date objects */
+function monthDays(year: number, month: number): Date[] {
+  const days: Date[] = [];
+  const date = new Date(year, month, 1);
+  while (date.getMonth() === month) {
+    days.push(new Date(date));
+    date.setDate(date.getDate() + 1);
+  }
+  return days;
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+interface MonthGridProps {
+  year: number;
+  month: number;
+  eventMap: Map<string, CriticalDate[]>;
+  selectedKey: string | null;
+  onDaySelect: (key: string, date: Date) => void;
+}
+
+function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGridProps) {
+  const days = monthDays(year, month);
+  const firstWeekday = isoWeekday(days[0]); // leading blank cells
+
+  return (
+    <div className="mb-4">
+      {/* Month header */}
+      <div className="calendar-month-header px-1">
+        {CROATIAN_MONTHS[month]} {year}
+      </div>
+
+      {/* Weekday labels row */}
+      <div className="calendar-grid">
+        {WEEKDAY_HEADERS.map((label, i) => (
+          <div key={i} className="calendar-weekday-header">
+            {label}
+          </div>
+        ))}
+      </div>
+
+      {/* Day cells */}
+      <div className="calendar-grid">
+        {/* Leading empty cells to align first day */}
+        {Array.from({ length: firstWeekday }, (_, i) => (
+          <div key={`empty-${i}`} className="calendar-cell" />
+        ))}
+
+        {days.map((day) => {
+          const key = toKey(day);
+          const events = eventMap.get(key) ?? [];
+          const today = isToday(day);
+          const selected = selectedKey === key;
+          const weekday = isoWeekday(day);
+          const teachingWeek = weekday === 0 ? getTeachingWeek(day) : null;
+
+          return (
+            <button
+              key={key}
+              onClick={() => onDaySelect(key, day)}
+              className={[
+                "calendar-cell",
+                today ? "calendar-today" : "",
+              ].join(" ")}
+              style={{
+                cursor: events.length > 0 ? "pointer" : "default",
+                textAlign: "left",
+                background: selected
+                  ? "color-mix(in srgb, var(--foreground) 8%, transparent)"
+                  : today
+                  ? undefined
+                  : undefined,
+                outline: selected ? "1px solid var(--foreground)" : undefined,
+                outlineOffset: "-1px",
+                position: "relative",
+              }}
+            >
+              {/* Teaching week label for Monday cells */}
+              {teachingWeek !== null && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 2,
+                    right: 2,
+                    fontSize: 8,
+                    fontWeight: 700,
+                    letterSpacing: "0.02em",
+                    color: "var(--muted-fg)",
+                    lineHeight: 1,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  T{teachingWeek}
+                </span>
+              )}
+
+              {/* Date number */}
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: today ? 700 : 500,
+                  color: today ? "var(--m-text)" : "var(--foreground)",
+                  lineHeight: 1,
+                  display: "block",
+                  marginBottom: events.length > 0 ? 3 : 0,
+                }}
+              >
+                {day.getDate()}
+              </span>
+
+              {/* Event dots */}
+              {events.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+                  {events.slice(0, 4).map((event, i) => (
+                    <span
+                      key={i}
+                      className="calendar-event-dot"
+                      style={{ background: EVENT_COLOR[event.type] }}
+                    />
+                  ))}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Event detail panel ────────────────────────────────────────────────────────
+
+interface EventDetailPanelProps {
+  selectedDate: Date;
+  events: CriticalDate[];
+  currentWeek: number;
+}
+
+function EventDetailPanel({ selectedDate, events, currentWeek }: EventDetailPanelProps) {
+  const week = getWeekForDate(selectedDate);
+  const isCurrentWeek = week === currentWeek;
+
+  return (
+    <div
+      style={{
+        margin: "0 0 8px 0",
+        padding: "10px 12px",
+        background: "var(--card)",
+        border: "1px solid var(--border)",
+        borderRadius: 8,
+      }}
+    >
+      {/* Panel header */}
+      <p
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: "var(--muted-fg)",
+          marginBottom: 6,
+          letterSpacing: "0.04em",
+          textTransform: "uppercase",
+        }}
+      >
+        {formatHrDate(selectedDate)}
+        {isCurrentWeek && (
+          <span style={{ color: "var(--m-text)", marginLeft: 6, fontWeight: 600, textTransform: "none" }}>
+            · Tjedan {week} (trenutni)
+          </span>
+        )}
+        {!isCurrentWeek && (
+          <span style={{ color: "var(--muted-fg)", marginLeft: 6, fontWeight: 500, textTransform: "none" }}>
+            · Tjedan {week}
+          </span>
+        )}
+      </p>
+
+      {events.length === 0 ? (
+        <p style={{ fontSize: 11, color: "var(--muted-fg)" }}>Nema rokova na ovaj datum.</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+          {events.map((event, i) => {
+            const subj = subjectMap.get(event.subjectId);
+            const urgencyColor =
+              event.urgency === "critical"
+                ? "var(--u-critical)"
+                : event.urgency === "approaching"
+                ? "var(--u-approaching)"
+                : "var(--muted-fg)";
+
+            return (
+              <div
+                key={i}
+                style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}
+              >
+                <span
+                  className="urgency-dot"
+                  style={{ background: urgencyColor, flexShrink: 0 }}
+                />
+                <span style={{ color: "var(--foreground)", fontWeight: 600 }}>
+                  {subj?.short_name ?? event.subjectId}
+                </span>
+                <span style={{ color: "var(--muted-fg)" }}>
+                  {TYPE_LABEL[event.type]}
+                  {event.date ? ` · ${formatHrDate(event.date)}` : ""}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export function SemesterTimeline({
   currentWeek,
@@ -18,26 +284,36 @@ export function SemesterTimeline({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const { weekHeat, weekEvents } = useMemo(() => {
+  // Build a date-keyed event map from all critical dates that have an exact date
+  const eventMap = useMemo<Map<string, CriticalDate[]>>(() => {
     const dates = extractCriticalDates(curriculum as Record<string, CurriculumEntry>);
-    const heat = getWeekHeat(dates);
-    const events = new Map<number, CriticalDate[]>();
-    for (const d of dates) {
-      if (!events.has(d.week)) events.set(d.week, []);
-      events.get(d.week)!.push(d);
+    const map = new Map<string, CriticalDate[]>();
+    for (const cd of dates) {
+      if (!cd.date) continue;
+      const key = toKey(cd.date);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(cd);
     }
-    return { weekHeat: heat, weekEvents: events };
+    return map;
   }, []);
 
   if (!isOpen) return null;
 
-  const handleWeekTap = (week: number) => {
-    setSelectedWeek(selectedWeek === week ? null : week);
+  const handleDaySelect = (key: string, date: Date) => {
+    if (selectedKey === key) {
+      // Deselect on second tap
+      setSelectedKey(null);
+      setSelectedDate(null);
+    } else {
+      setSelectedKey(key);
+      setSelectedDate(date);
+    }
   };
 
-  const selected = selectedWeek !== null ? weekEvents.get(selectedWeek) ?? [] : [];
+  const selectedEvents = selectedKey ? (eventMap.get(selectedKey) ?? []) : [];
 
   return (
     <>
@@ -60,21 +336,27 @@ export function SemesterTimeline({
           transform: "none",
           width: "100%",
           maxWidth: "100%",
-          maxHeight: "70vh",
+          maxHeight: "85vh",
           borderRadius: "16px 16px 0 0",
           animation: "sheet-up 300ms cubic-bezier(0.2, 0, 0, 1) both",
           padding: 0,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
         }}
       >
-        {/* Handle */}
-        <div className="flex justify-center pt-3 pb-2">
+        {/* Handle bar */}
+        <div className="flex justify-center pt-3 pb-1" style={{ flexShrink: 0 }}>
           <div className="w-10 h-1 rounded-full bg-muted-fg/30" />
         </div>
 
         {/* Title row */}
-        <div className="flex items-center justify-between px-4 pb-2">
+        <div
+          className="flex items-center justify-between px-4 pb-2"
+          style={{ flexShrink: 0 }}
+        >
           <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-muted-fg">
-            Raspored semestra
+            Kalendar semestra
           </span>
           <button
             onClick={onClose}
@@ -84,107 +366,79 @@ export function SemesterTimeline({
           </button>
         </div>
 
-        {/* Week strip */}
-        <div className="timeline-strip">
-          {Array.from({ length: TOTAL_WEEKS }, (_, i) => {
-            const week = i + 1;
-            const isCurrent = week === currentWeek;
-            const isPast = week < currentWeek;
-            const isSelected = week === selectedWeek;
-            const heat = weekHeat.get(week) ?? 0;
+        {/* Scrollable content area */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "0 16px 24px",
+          }}
+        >
+          {/* Event detail panel — shown above months when a day is selected */}
+          {selectedKey && selectedDate && (
+            <EventDetailPanel
+              selectedDate={selectedDate}
+              events={selectedEvents}
+              currentWeek={currentWeek}
+            />
+          )}
 
-            const dotColor =
-              heat >= 2 ? "var(--u-critical)"
-              : heat === 1 ? "var(--u-approaching)"
-              : "transparent";
+          {/* Month grids */}
+          {CALENDAR_MONTHS.map(({ year, month }) => (
+            <MonthGrid
+              key={`${year}-${month}`}
+              year={year}
+              month={month}
+              eventMap={eventMap}
+              selectedKey={selectedKey}
+              onDaySelect={handleDaySelect}
+            />
+          ))}
 
-            return (
-              <button
-                key={week}
-                onClick={() => handleWeekTap(week)}
-                className="timeline-week"
-                style={{
-                  flex: isCurrent ? 1.5 : 1,
-                  background: isSelected
-                    ? "var(--card)"
-                    : isCurrent
-                    ? "var(--m-tint-strong)"
-                    : "transparent",
-                  opacity: isPast && !isSelected ? 0.4 : 1,
-                  borderBottom: isSelected ? "2px solid var(--foreground)" : "2px solid transparent",
-                }}
+          {/* Legend */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "8px 16px",
+              marginTop: 8,
+              paddingTop: 8,
+              borderTop: "1px solid var(--border-subtle)",
+            }}
+          >
+            {(
+              [
+                ["kolokvij", "Kolokvij"],
+                ["ispit", "Ispit"],
+                ["predaja", "Predaja"],
+                ["laboratorij", "Laboratorij"],
+              ] as const
+            ).map(([type, label]) => (
+              <div
+                key={type}
+                style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}
               >
                 <span
-                  style={{
-                    fontSize: "10px",
-                    fontWeight: isCurrent || isSelected ? 700 : 600,
-                    fontVariantNumeric: "tabular-nums",
-                    letterSpacing: "0.02em",
-                    color: isSelected || isCurrent ? "var(--foreground)" : "var(--muted-fg)",
-                    lineHeight: 1,
-                  }}
-                >
-                  {week}
-                </span>
-                <span
-                  className="urgency-dot"
-                  style={{ background: dotColor }}
+                  className="calendar-event-dot"
+                  style={{ background: EVENT_COLOR[type] }}
                 />
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Week detail panel */}
-        <div className="px-4 py-3 overflow-y-auto" style={{ minHeight: 80 }}>
-          {selectedWeek === null ? (
-            <p className="text-[11px] text-muted-fg text-center py-4">
-              Tapnite tjedan za pregled rokova.
-            </p>
-          ) : selected.filter(e => e.type !== "ispit").length === 0 ? (
-            <div>
-              <p className="text-[11px] font-semibold text-muted-fg mb-1">
-                Tjedan {selectedWeek}
-                {selectedWeek === currentWeek && (
-                  <span className="text-m-text ml-1.5 normal-case">(trenutni)</span>
-                )}
-              </p>
-              <p className="text-[11px] text-muted-fg py-1">Nema rokova ovaj tjedan.</p>
-            </div>
-          ) : (
-            <div>
-              <p className="text-[11px] font-semibold text-muted-fg mb-2">
-                Tjedan {selectedWeek}
-                {selectedWeek === currentWeek && (
-                  <span className="text-m-text ml-1.5 normal-case">(trenutni)</span>
-                )}
-              </p>
-              <div className="space-y-1">
-                {selected.filter(e => e.type !== "ispit").map((event, i) => {
-                  const subj = subjectMap.get(event.subjectId);
-                  const urgencyColor =
-                    event.urgency === "critical" ? "var(--u-critical)"
-                    : event.urgency === "approaching" ? "var(--u-approaching)"
-                    : "var(--muted-fg)";
-                  return (
-                    <div key={i} className="flex items-center gap-2 text-[12px]">
-                      <span
-                        className="urgency-dot shrink-0"
-                        style={{ background: urgencyColor }}
-                      />
-                      <span className="text-foreground font-medium">
-                        {subj?.short_name ?? event.subjectId}
-                      </span>
-                      <span className="text-muted-fg">
-                        {TYPE_LABEL[event.type]}
-                        {event.date ? ` · ${formatHrDate(event.date)}` : ""}
-                      </span>
-                    </div>
-                  );
-                })}
+                <span style={{ color: "var(--muted-fg)", fontWeight: 500 }}>{label}</span>
               </div>
+            ))}
+            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
+              <span
+                style={{
+                  width: 12,
+                  height: 10,
+                  borderRadius: 2,
+                  background: "color-mix(in srgb, var(--m-accent) 8%, transparent)",
+                  display: "inline-block",
+                  border: "1px solid color-mix(in srgb, var(--m-accent) 30%, transparent)",
+                }}
+              />
+              <span style={{ color: "var(--muted-fg)", fontWeight: 500 }}>Danas</span>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </>

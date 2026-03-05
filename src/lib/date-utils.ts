@@ -106,3 +106,24 @@ export function daysUntil(date: Date): number {
   return Math.round((targetMidnight.getTime() - todayMidnight.getTime()) / MS_PER_DAY);
 }
 
+/**
+ * Returns the Monday and Friday dates for the given teaching week number (1–15).
+ * Week 1 starts on SEMESTER_START (which is a Monday).
+ */
+export function getWeekDates(week: number): { monday: Date; friday: Date } {
+  const start = new Date(SEMESTER_START);
+  const monday = new Date(start.getTime() + (week - 1) * MS_PER_WEEK);
+  const friday = new Date(monday.getTime() + 4 * MS_PER_DAY);
+  return { monday, friday };
+}
+
+/**
+ * Returns a short Croatian date string in the format "DD.MM."
+ * Example: Date(2026, 2, 9) → "09.03."
+ */
+export function formatShortDate(date: Date): string {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${day}.${month}.`;
+}
+

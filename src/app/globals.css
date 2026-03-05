@@ -449,55 +449,62 @@ body {
   line-height: 1.5;
 }
 
-/* ── Course select dropdown ──────────────────────────────────── */
-.course-select-wrap {
+/* ── Calendar grid ───────────────────────────────────────────────── */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
+}
+
+.calendar-cell {
+  min-height: 40px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 2px 4px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
   position: relative;
-  display: flex;
-  align-items: center;
 }
 
-.course-select {
-  width: 100%;
-  appearance: none;
-  -webkit-appearance: none;
-  background: var(--muted);
+.calendar-today {
+  background: color-mix(in srgb, var(--m-accent) 8%, transparent);
+}
+
+.calendar-event-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.calendar-month-header {
+  font-size: 13px;
+  font-weight: 700;
   color: var(--foreground);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 7px 36px 7px 12px;
-  font-size: 12px;
+  padding: 12px 0 6px;
+}
+
+.calendar-weekday-header {
+  font-size: 10px;
   font-weight: 600;
-  font-family: inherit;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  outline: none;
-  transition: border-color var(--duration-quick) var(--ease-out-expo),
-              background var(--duration-quick) var(--ease-out-expo);
-}
-
-.course-select:focus {
-  border-color: color-mix(in srgb, var(--foreground) 40%, transparent);
-  background: var(--card);
-}
-
-/* Suppress default OS arrow on IE/Edge legacy */
-.course-select::-ms-expand {
-  display: none;
-}
-
-/* Dropdown option colors — best-effort; OS controls this on most platforms */
-.course-select option {
-  background: var(--card);
-  color: var(--foreground);
-}
-
-.course-select-chevron {
-  position: absolute;
-  right: 11px;
-  top: 50%;
-  transform: translateY(-50%);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--muted-fg);
-  pointer-events: none;
-  display: flex;
+  text-align: center;
+  padding: 4px 0;
+}
+
+/* ── Resource links ──────────────────────────────────────────── */
+.resource-link {
+  display: inline-flex;
   align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--e-text);
+  text-decoration: none;
+  transition: color var(--duration-quick) var(--ease-out-expo);
+}
+.resource-link:hover {
+  text-decoration: underline;
+  color: var(--foreground);
 }
