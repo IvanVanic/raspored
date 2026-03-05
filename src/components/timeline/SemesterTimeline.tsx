@@ -394,6 +394,7 @@ export function SemesterTimeline({
           >
             {([
               ["kolokvij", "Kolokvij"],
+              ["kontrolna", "Kontrolna"],
               ["ispit", "Ispit"],
               ["obrana", "Obrana"],
               ["kviz", "Kviz"],

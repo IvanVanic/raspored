@@ -42,12 +42,14 @@ const LABORATORIJ_RE = /\blaboratorij\b/i;
 const PREDAJA_RE = /\bpredaj[ae]\b/i;
 const ZADAVANJE_RE = /\bzadavanj[ae]\b/i;
 const DOMACA_ZADACA_RE = /\bdomać[ae]\s+zadać[ae]\b/i;
+const KONTROLNA_RE = /\bkontroln[ae]\s+zadać[ae]\b/i;
 
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
 
 function classifyText(text: string): EventType | null {
+  if (KONTROLNA_RE.test(text)) return "kontrolna";
   if (KOLOKVIJ_RE.test(text)) return "kolokvij";
   if (OBRANA_RE.test(text)) return "obrana";
   if (KVIZ_RE.test(text)) return "kviz";
@@ -137,6 +139,20 @@ export function extractCriticalDates(
         type: "ispit",
         urgency,
       });
+    }
+
+    // --- Scan grading notes for dated items not already caught by week topics ---
+    const seenDates = new Set(results.filter(r => r.subjectId === subjectId && r.date).map(r => r.date!.getTime()));
+    for (const g of entry.grading) {
+      if (!g.note) continue;
+      const date = extractDateFromText(g.note);
+      if (!date || seenDates.has(date.getTime())) continue;
+      const type = classifyText(g.component) ?? classifyText(g.note);
+      if (!type || type === "ispit") continue; // exams already handled above
+      const week = getWeekForDate(date);
+      const urgency = computeUrgency(date);
+      seenDates.add(date.getTime());
+      results.push({ subjectId, label: g.component, date, week, type, urgency });
     }
   }
 

@@ -9,6 +9,7 @@ export const TYPE_LABEL: Record<EventType, string> = {
   predaja: "Predaja",
   zadavanje: "Zadavanje",
   domaca_zadaca: "Domaća zadaća",
+  kontrolna: "Kontrolna zadaća",
 };
 
 export const TYPE_CATEGORY: Record<EventType, "exam" | "assignment" | "lab"> = {
@@ -20,6 +21,7 @@ export const TYPE_CATEGORY: Record<EventType, "exam" | "assignment" | "lab"> = {
   predaja: "assignment",
   zadavanje: "assignment",
   domaca_zadaca: "assignment",
+  kontrolna: "exam",
 };
 
 export const EVENT_COLOR: Record<EventType, string> = {
@@ -31,4 +33,5 @@ export const EVENT_COLOR: Record<EventType, string> = {
   predaja: "var(--e-accent)",
   zadavanje: "var(--muted-fg)",
   domaca_zadaca: "var(--e-accent)",
+  kontrolna: "var(--u-critical)",
 };

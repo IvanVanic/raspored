@@ -77,7 +77,7 @@ export interface CriticalDate {
   label: string;
   date: Date | null;
   week: number;
-  type: "kolokvij" | "obrana" | "kviz" | "ispit" | "laboratorij" | "predaja" | "zadavanje" | "domaca_zadaca";
+  type: "kolokvij" | "obrana" | "kviz" | "ispit" | "laboratorij" | "predaja" | "zadavanje" | "domaca_zadaca" | "kontrolna";
   urgency: UrgencyLevel;
 }
 

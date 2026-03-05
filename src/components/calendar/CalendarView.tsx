@@ -22,6 +22,7 @@ type TypeFilter = EventType | null; // null = all
 const TYPE_FILTERS: { label: string; value: EventType | null }[] = [
   { label: "Sve", value: null },
   { label: "Kolokviji", value: "kolokvij" },
+  { label: "Kontrolne", value: "kontrolna" },
   { label: "Ispiti", value: "ispit" },
   { label: "Obrane", value: "obrana" },
   { label: "Kvizovi", value: "kviz" },
