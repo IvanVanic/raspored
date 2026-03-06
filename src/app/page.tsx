@@ -19,18 +19,20 @@ export default function Home() {
   const temporal = useTemporalContext();
   const [view, setView] = useState<View>("raspored");
   const [dayIdx, setDayIdx] = useState(temporal.smartDefaultDay);
+  const [viewingWeek, setViewingWeek] = useState(temporal.currentWeek);
   const [modalSlot, setModalSlot] = useState<Slot | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [testExpand, setTestExpand] = useState<{ subjectId: string; event: CriticalDate } | null>(null);
 
-  // Sync dayIdx with correct smartDefaultDay after hydration
+  // Sync dayIdx and viewingWeek with correct values after hydration
   const hydrated = useRef(false);
   useEffect(() => {
     if (!hydrated.current) {
       hydrated.current = true;
       setDayIdx(temporal.smartDefaultDay);
+      setViewingWeek(temporal.currentWeek);
     }
-  }, [temporal.smartDefaultDay]);
+  }, [temporal.smartDefaultDay, temporal.currentWeek]);
 
   const onTestTap = (event: CriticalDate) => {
     setTestExpand({ subjectId: event.subjectId, event });
@@ -46,6 +48,8 @@ export default function Home() {
         view={view}
         onViewChange={setView}
         currentWeek={temporal.currentWeek}
+        viewingWeek={viewingWeek}
+        onWeekChange={setViewingWeek}
         year={data.meta.year}
         onWeekBadgeTap={() => setTimelineOpen(true)}
       />
@@ -61,11 +65,11 @@ export default function Home() {
         <>
           {/* Mobile */}
           <div className="md:hidden">
-            <DayView dayIdx={dayIdx} setDayIdx={setDayIdx} onSlotClick={setModalSlot} />
+            <DayView dayIdx={dayIdx} setDayIdx={setDayIdx} viewingWeek={viewingWeek} onSlotClick={setModalSlot} />
           </div>
           {/* Desktop */}
           <div className="hidden md:block">
-            <DesktopGrid onSlotClick={setModalSlot} />
+            <DesktopGrid viewingWeek={viewingWeek} onSlotClick={setModalSlot} />
           </div>
         </>
       ) : (

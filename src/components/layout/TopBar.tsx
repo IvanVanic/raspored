@@ -18,12 +18,16 @@ export function TopBar({
   view,
   onViewChange,
   currentWeek,
+  viewingWeek,
+  onWeekChange,
   year,
   onWeekBadgeTap,
 }: {
   view: View;
   onViewChange: (v: View) => void;
   currentWeek: number;
+  viewingWeek: number;
+  onWeekChange: (week: number) => void;
   year: string;
   onWeekBadgeTap: () => void;
 }) {
@@ -68,17 +72,55 @@ export function TopBar({
             </button>
           </div>
           {currentWeek >= 1 && currentWeek <= 15 && (
-            <button
-              onClick={onWeekBadgeTap}
-              className="week-badge cursor-pointer hover:opacity-80 t-fast transition-opacity gap-1.5"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="1.5" y="2.5" width="11" height="10" rx="1.5" />
-                <path d="M4.5 1v2.5M9.5 1v2.5M1.5 5.5h11" />
-                <path d="M1.5 8h11" opacity="0.4" />
-              </svg>
-              T{currentWeek}/15
-            </button>
+            <div className="flex items-center gap-1">
+              {/* Week stepper — only show in raspored view */}
+              {view === "raspored" && (
+                <>
+                  <button
+                    onClick={() => onWeekChange(Math.max(1, viewingWeek - 1))}
+                    disabled={viewingWeek <= 1}
+                    className="p-1.5 rounded-md text-muted-fg hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none t-fast transition-colors"
+                    aria-label="Prethodni tjedan"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M7.5 2.5L4 6l3.5 3.5" />
+                    </svg>
+                  </button>
+                  {viewingWeek !== currentWeek && (
+                    <button
+                      onClick={() => onWeekChange(currentWeek)}
+                      className="px-1.5 py-0.5 text-[9px] font-semibold tracking-[0.04em] rounded bg-accent/20 text-accent hover:bg-accent/30 t-fast transition-colors"
+                      title="Skoči na trenutni tjedan"
+                    >
+                      danas
+                    </button>
+                  )}
+                </>
+              )}
+              <button
+                onClick={onWeekBadgeTap}
+                className={`week-badge cursor-pointer hover:opacity-80 t-fast transition-opacity gap-1.5 ${viewingWeek !== currentWeek ? "opacity-60" : ""}`}
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="1.5" y="2.5" width="11" height="10" rx="1.5" />
+                  <path d="M4.5 1v2.5M9.5 1v2.5M1.5 5.5h11" />
+                  <path d="M1.5 8h11" opacity="0.4" />
+                </svg>
+                T{viewingWeek}/15
+              </button>
+              {view === "raspored" && (
+                <button
+                  onClick={() => onWeekChange(Math.min(15, viewingWeek + 1))}
+                  disabled={viewingWeek >= 15}
+                  className="p-1.5 rounded-md text-muted-fg hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none t-fast transition-colors"
+                  aria-label="Sljedeći tjedan"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4.5 2.5L8 6l-3.5 3.5" />
+                  </svg>
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>

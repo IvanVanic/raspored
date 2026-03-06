@@ -22,10 +22,11 @@ function getSlotTopic(subjectId: string, slotType: "P" | "V", currentWeek: numbe
   return slotType === "P" ? weekData.lecture : weekData.exercise;
 }
 
-export function DesktopGrid({ onSlotClick }: { onSlotClick: (slot: Slot) => void }) {
+export function DesktopGrid({ viewingWeek, onSlotClick }: { viewingWeek: number; onSlotClick: (slot: Slot) => void }) {
   const timeSlots = data.day_time_slots;
-  const todayName = getTodayDayName();
   const currentWeek = getCurrentWeek();
+  const isCurrentWeek = viewingWeek === currentWeek;
+  const todayName = isCurrentWeek ? getTodayDayName() : null;
 
   const urgencies = useMemo(() => getSubjectUrgencies(curriculum), []);
 
@@ -34,7 +35,7 @@ export function DesktopGrid({ onSlotClick }: { onSlotClick: (slot: Slot) => void
     // Collect all unique start times (regular + override slots)
     const allStarts = new Set(timeSlots.map((ts) => ts.start));
     for (let i = 0; i < data.days_order.length; i++) {
-      for (const s of getSlotsForDayIdx(i)) allStarts.add(s.start);
+      for (const s of getSlotsForDayIdx(i, viewingWeek)) allStarts.add(s.start);
     }
     const sortedStarts = [...allStarts].sort();
 
@@ -42,22 +43,22 @@ export function DesktopGrid({ onSlotClick }: { onSlotClick: (slot: Slot) => void
       grid[start] = {};
       for (let i = 0; i < data.days_order.length; i++) {
         const day = data.days_order[i];
-        const slots = getSlotsForDayIdx(i);
+        const slots = getSlotsForDayIdx(i, viewingWeek);
         grid[start][day] = slots.find((s) => s.start === start) ?? null;
       }
     }
     return { grid, rows: sortedStarts };
-  }, [timeSlots]);
+  }, [timeSlots, viewingWeek]);
 
   // Build end-time lookup: override slots may have non-standard end times
   const endTimeMap = useMemo(() => {
     const m: Record<string, string> = {};
     for (const ts of timeSlots) m[ts.start] = ts.end;
     for (let i = 0; i < data.days_order.length; i++) {
-      for (const s of getSlotsForDayIdx(i)) m[s.start] = s.end;
+      for (const s of getSlotsForDayIdx(i, viewingWeek)) m[s.start] = s.end;
     }
     return m;
-  }, [timeSlots]);
+  }, [timeSlots, viewingWeek]);
 
   return (
     <div className="overflow-x-auto px-4 pt-4 pb-6">
@@ -103,7 +104,7 @@ export function DesktopGrid({ onSlotClick }: { onSlotClick: (slot: Slot) => void
                           slot={slot}
                           onClick={() => onSlotClick(slot)}
                           urgency={urgencies.get(slot.subject_id)}
-                          topic={getSlotTopic(slot.subject_id, slot.type as "P" | "V", currentWeek)}
+                          topic={getSlotTopic(slot.subject_id, slot.type as "P" | "V", viewingWeek)}
                         />
                       )}
                     </td>

@@ -51,22 +51,26 @@ function getSlotTopic(subjectId: string, slotType: "P" | "V", currentWeek: numbe
 export function DayView({
   dayIdx,
   setDayIdx,
+  viewingWeek,
   onSlotClick,
 }: {
   dayIdx: number;
   setDayIdx: (i: number) => void;
+  viewingWeek: number;
   onSlotClick: (slot: Slot) => void;
 }) {
   const dayName = data.days_order[dayIdx];
-  const slots = getSlotsForDayIdx(dayIdx);
-  const overrideNote = getOverrideNote(dayIdx);
+  const slots = getSlotsForDayIdx(dayIdx, viewingWeek);
+  const overrideNote = getOverrideNote(dayIdx, viewingWeek);
   const currentWeek = getCurrentWeek();
+  const isCurrentWeek = viewingWeek === currentWeek;
 
   const urgencies = useMemo(() => getSubjectUrgencies(curriculum), []);
 
   const jsDay = new Date().getDay();
   const todayIdx = jsDay >= 1 && jsDay <= 5 ? jsDay - 1 : -1;
-  const timeStatuses = getTimeStatuses(slots, dayIdx === todayIdx);
+  // Only show time statuses (now/next) when viewing current week
+  const timeStatuses = getTimeStatuses(slots, isCurrentWeek && dayIdx === todayIdx);
 
   // Swipe handling
   const touchStartX = useRef<number | null>(null);
@@ -125,7 +129,7 @@ export function DayView({
         ) : (
           <div className="space-y-2.5">
             {slots.map((slot, i) => {
-              const topic = getSlotTopic(slot.subject_id, slot.type as "P" | "V", currentWeek);
+              const topic = getSlotTopic(slot.subject_id, slot.type as "P" | "V", viewingWeek);
               return (
                 <div key={`${dayIdx}-${i}`} className="flex gap-0">
                   <div className="w-16 shrink-0 pt-3 pr-3 text-right border-r border-border-subtle">
