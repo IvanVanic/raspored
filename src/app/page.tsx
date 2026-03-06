@@ -65,7 +65,7 @@ export default function Home() {
         <>
           {/* Mobile */}
           <div className="md:hidden">
-            <DayView dayIdx={dayIdx} setDayIdx={setDayIdx} viewingWeek={viewingWeek} onSlotClick={setModalSlot} />
+            <DayView dayIdx={dayIdx} setDayIdx={setDayIdx} viewingWeek={viewingWeek} onWeekChange={setViewingWeek} onSlotClick={setModalSlot} />
           </div>
           {/* Desktop */}
           <div className="hidden md:block">

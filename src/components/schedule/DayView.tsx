@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import type { Slot } from "@/data/types";
 import { data, getSlotsForDayIdx, getOverrideNote } from "@/data/schedule";
 import { curriculum } from "@/data/curriculum";
-import { getCurrentWeek } from "@/lib/date-utils";
+import { getCurrentWeek, TOTAL_WEEKS } from "@/lib/date-utils";
 import { getSubjectUrgencies } from "@/lib/extraction";
+import { useSwipe } from "@/hooks/useSwipe";
 import { SlotCard } from "./SlotCard";
 import type { TimeStatus } from "./SlotCard";
 
@@ -52,11 +53,13 @@ export function DayView({
   dayIdx,
   setDayIdx,
   viewingWeek,
+  onWeekChange,
   onSlotClick,
 }: {
   dayIdx: number;
   setDayIdx: (i: number) => void;
   viewingWeek: number;
+  onWeekChange: (week: number) => void;
   onSlotClick: (slot: Slot) => void;
 }) {
   const dayName = data.days_order[dayIdx];
@@ -72,24 +75,30 @@ export function DayView({
   // Only show time statuses (now/next) when viewing current week
   const timeStatuses = getTimeStatuses(slots, isCurrentWeek && dayIdx === todayIdx);
 
-  // Swipe handling
-  const touchStartX = useRef<number | null>(null);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    touchStartX.current = null;
-    if (Math.abs(dx) < 40) return;
-    if (dx < 0 && dayIdx < data.days_order.length - 1) {
-      setDayIdx(dayIdx + 1);
-    } else if (dx > 0 && dayIdx > 0) {
-      setDayIdx(dayIdx - 1);
-    }
-  };
+  // Swipe handling with edge-week navigation
+  const swipeHandlers = useSwipe({
+    onSwipeLeft: () => {
+      if (dayIdx < data.days_order.length - 1) {
+        // Move to next day
+        setDayIdx(dayIdx + 1);
+      } else if (viewingWeek < TOTAL_WEEKS) {
+        // At Friday, go to next week's Monday
+        onWeekChange(viewingWeek + 1);
+        setDayIdx(0);
+      }
+    },
+    onSwipeRight: () => {
+      if (dayIdx > 0) {
+        // Move to previous day
+        setDayIdx(dayIdx - 1);
+      } else if (viewingWeek > 1) {
+        // At Monday, go to previous week's Friday
+        onWeekChange(viewingWeek - 1);
+        setDayIdx(4);
+      }
+    },
+    threshold: 50,
+  });
 
   return (
     <div>
@@ -114,8 +123,7 @@ export function DayView({
       {/* Swipeable content */}
       <div
         className="px-4 pt-4 pb-6"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
+        {...swipeHandlers}
       >
         {overrideNote && (
           <div className="mb-3 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[12px] text-amber-400 leading-snug">
