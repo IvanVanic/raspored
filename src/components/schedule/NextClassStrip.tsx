@@ -31,8 +31,10 @@ export function NextClassStrip({
 
   const { slot, dayName, minutesUntil } = next;
   const subj = subjectMap.get(slot.subject_id);
-  const name = subj ? `${subj.short_name} (${slot.type})` : slot.subject_id;
+  const shortName = subj?.short_name ?? slot.subject_id;
   const cc = getCourseColor(slot.subject_id);
+  const isLive = minutesUntil === 0;
+
   const jsDay = new Date().getDay();
   const isWeekday = jsDay >= 1 && jsDay <= 5;
   const todayIdx = isWeekday ? jsDay - 1 : -1;
@@ -40,7 +42,7 @@ export function NextClassStrip({
   const isToday = slotDayIdx === todayIdx;
 
   let timeLabel: string;
-  if (minutesUntil === 0) {
+  if (isLive) {
     timeLabel = "u tijeku";
   } else if (isToday && minutesUntil < 60) {
     timeLabel = `za ${minutesUntil} min`;
@@ -55,48 +57,81 @@ export function NextClassStrip({
     timeLabel = `za ~${h}h`;
   }
 
-  const progress = minutesUntil === 0
-    ? Math.min(1, Math.max(0, (currentMinutes - parseTime(slot.start)) / (parseTime(slot.end) - parseTime(slot.start))))
+  const progress = isLive
+    ? Math.min(1, Math.max(0,
+        (currentMinutes - parseTime(slot.start)) /
+        (parseTime(slot.end) - parseTime(slot.start))
+      ))
     : 0;
 
   return (
-    <div
-      className="flex items-center gap-3 px-4 py-2.5 border-b border-border-subtle cursor-pointer active:opacity-80 t-fast transition-opacity"
-      style={{ position: "relative", background: `color-mix(in srgb, ${cc.tint} 60%, var(--background))` }}
+    <button
+      type="button"
+      className="next-class-strip group"
       onClick={() => onTap?.(slot)}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onTap?.(slot); } }}
-      role="button"
-      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onTap?.(slot);
+        }
+      }}
+      aria-label={`Sljedeća nastava: ${shortName}, ${slot.type}, ${timeLabel}`}
     >
+      {/* Left accent bar — same language as slot cards */}
       <span
-        className="w-1.5 h-1.5 rounded-full shrink-0"
-        style={{ background: minutesUntil === 0 ? cc.accent : cc.accent, opacity: minutesUntil === 0 ? 1 : 0.5 }}
+        className="next-class-bar"
+        style={{ background: cc.accent }}
+        aria-hidden="true"
       />
-      <span className="text-[13px] font-semibold leading-none" style={{ color: cc.text }}>
-        {name}
+
+      {/* Content */}
+      <span className="next-class-body">
+        <span className="next-class-top">
+          <span
+            className="next-class-name"
+            style={{ color: cc.text }}
+          >
+            {shortName}
+          </span>
+          <span className="next-class-type">
+            {slot.type}
+          </span>
+        </span>
+        <span className="next-class-meta">
+          <span>{slot.start} – {slot.end}</span>
+          {slot.room && (
+            <>
+              <span className="meta-sep" aria-hidden="true" />
+              <span>{slot.room}</span>
+            </>
+          )}
+        </span>
       </span>
-      <span className="text-[12px] text-muted-fg leading-none">
-        {slot.room}
-      </span>
+
+      {/* Time label */}
       <span
-        className="ml-auto text-[11px] font-semibold tabular-nums"
-        style={{ color: minutesUntil === 0 ? cc.text : "var(--muted-fg)" }}
+        className="next-class-time"
+        style={{
+          color: isLive ? cc.text : "var(--muted-fg)",
+          background: isLive
+            ? `color-mix(in srgb, ${cc.accent} 14%, transparent)`
+            : "transparent",
+        }}
       >
         {timeLabel}
       </span>
-      {minutesUntil === 0 && (
-        <div
+
+      {/* Live progress bar */}
+      {isLive && (
+        <span
+          className="next-class-progress"
           style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            height: "2px",
             width: `${progress * 100}%`,
             background: cc.accent,
-            transition: "width 1s linear",
           }}
+          aria-hidden="true"
         />
       )}
-    </div>
+    </button>
   );
 }

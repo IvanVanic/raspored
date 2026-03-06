@@ -5,7 +5,7 @@ import { curriculum } from "@/data/curriculum";
 import { subjectMap } from "@/data/schedule";
 import { extractCriticalDates } from "@/lib/extraction";
 import { SEMESTER_START, TOTAL_WEEKS, formatHrDate, getWeekForDate } from "@/lib/date-utils";
-import { TYPE_LABEL, EVENT_COLOR, TEST_TYPES } from "@/lib/labels";
+import { TYPE_LABEL, EVENT_COLOR, TEST_TYPES, getCourseColor, COURSE_COLOR } from "@/lib/labels";
 import type { CurriculumEntry, CriticalDate } from "@/data/types";
 
 const CROATIAN_MONTHS = ["Siječanj", "Veljača", "Ožujak", "Travanj", "Svibanj", "Lipanj",
@@ -58,6 +58,85 @@ function monthDays(year: number, month: number): Date[] {
   return days;
 }
 
+/** Returns a stable accent color for a subject, falling back to event-type color. */
+function resolveEventColor(event: CriticalDate): string {
+  const cc = COURSE_COLOR[event.subjectId];
+  return cc ? cc.accent : EVENT_COLOR[event.type];
+}
+
+// ─── Day event indicators ─────────────────────────────────────────────────────
+// Each day cell shows colored pill-bars instead of dots.
+// Up to 3 events get individual bars; 4+ collapses into a "+N" overflow pill.
+
+interface DayPillsProps {
+  events: CriticalDate[];
+  selected: boolean;
+}
+
+function DayPills({ events, selected }: DayPillsProps) {
+  const MAX_BARS = 3;
+  const shown = events.slice(0, MAX_BARS);
+  const overflow = events.length - MAX_BARS;
+
+  if (events.length === 0) {
+    // Reserve the bar-row height so all cells align
+    return <div style={{ height: 6 }} />;
+  }
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: 2,
+        width: "100%",
+        alignItems: "center",
+        justifyContent: "center",
+        height: 6,
+      }}
+    >
+      {shown.map((ev, i) => (
+        <span
+          key={i}
+          style={{
+            flex: 1,
+            height: 6,
+            minWidth: 0,
+            borderRadius: 3,
+            background: resolveEventColor(ev),
+            opacity: selected ? 1 : 0.85,
+            boxShadow: selected ? `0 0 6px ${resolveEventColor(ev)}88` : undefined,
+          }}
+        />
+      ))}
+      {overflow > 0 && (
+        <span
+          style={{
+            fontSize: 7,
+            fontWeight: 800,
+            color: "var(--muted-fg)",
+            lineHeight: 1,
+            letterSpacing: "-0.03em",
+            flexShrink: 0,
+          }}
+        >
+          +{overflow}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ─── Dense-day "provjera" indicator ──────────────────────────────────────────
+// If a day has 2+ exam-class events we mark it with a faint amber halo so it
+// reads as a "heavy" day even before the user taps.
+
+function isDenseExamDay(events: CriticalDate[]): boolean {
+  const examLike: Set<CriticalDate["type"]> = new Set(["kolokvij", "ispit", "kontrolna", "kviz"]);
+  return events.filter(e => examLike.has(e.type)).length >= 2;
+}
+
+// ─── Month grid ───────────────────────────────────────────────────────────────
+
 interface MonthGridProps {
   year: number;
   month: number;
@@ -79,12 +158,14 @@ function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGri
         {CROATIAN_MONTHS[month]} {year}
       </div>
 
+      {/* Weekday header row */}
       <div className="calendar-grid">
         {WEEKDAY_HEADERS.map((label, i) => (
           <div key={i} className="calendar-weekday-header">{label}</div>
         ))}
       </div>
 
+      {/* Day cells */}
       <div className="calendar-grid">
         {Array.from({ length: firstWeekday }, (_, i) => (
           <div key={`empty-${i}`} className="calendar-cell" />
@@ -99,6 +180,13 @@ function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGri
           const weekday = isoWeekday(day);
           const teachingWeek = weekday === 0 ? getTeachingWeek(day) : null;
           const isWeekend = weekday >= 5;
+          const denseExam = isDenseExamDay(events);
+
+          // Build background: today tint > dense exam tint > selected tint > default
+          let cellBg = "transparent";
+          if (today) cellBg = "color-mix(in srgb, var(--m-accent) 10%, transparent)";
+          if (denseExam && !today) cellBg = "color-mix(in srgb, var(--u-approaching) 7%, transparent)";
+          if (selected) cellBg = "color-mix(in srgb, var(--foreground) 10%, transparent)";
 
           return (
             <button
@@ -110,80 +198,74 @@ function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGri
                 selected ? "calendar-selected" : "",
               ].join(" ")}
               style={{
-                cursor: hasEvents ? "pointer" : "default",
+                // All cells are buttons and feel tappable — cursor always pointer
+                cursor: "pointer",
                 position: "relative",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                justifyContent: "flex-start",
-                gap: 2,
-                paddingTop: 4,
-                paddingBottom: 4,
-                opacity: isWeekend && !hasEvents ? 0.4 : 1,
+                justifyContent: "space-between",
+                gap: 3,
+                paddingTop: 5,
+                paddingBottom: 5,
+                background: cellBg,
+                opacity: isWeekend && !hasEvents ? 0.38 : 1,
+                minHeight: 44, // comfortable tap target
+                WebkitTapHighlightColor: "transparent",
               }}
             >
-              {/* Teaching week label */}
+              {/* Teaching week label — top-right micro text */}
               {teachingWeek !== null && (
-                <span style={{
-                  position: "absolute",
-                  top: 1,
-                  right: 2,
-                  fontSize: 7,
-                  fontWeight: 700,
-                  letterSpacing: "0.02em",
-                  color: "var(--muted-fg)",
-                  lineHeight: 1,
-                  fontVariantNumeric: "tabular-nums",
-                  opacity: 0.6,
-                }}>
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 2,
+                    right: 2,
+                    fontSize: 7,
+                    fontWeight: 700,
+                    letterSpacing: "0.02em",
+                    color: "var(--muted-fg)",
+                    lineHeight: 1,
+                    fontVariantNumeric: "tabular-nums",
+                    opacity: 0.5,
+                  }}
+                >
                   T{teachingWeek}
                 </span>
               )}
 
+              {/* Dense exam day halo ring — amber inset ring */}
+              {denseExam && !selected && (
+                <span
+                  style={{
+                    position: "absolute",
+                    inset: 1,
+                    borderRadius: 3,
+                    border: "1px solid color-mix(in srgb, var(--u-approaching) 40%, transparent)",
+                    pointerEvents: "none",
+                  }}
+                />
+              )}
+
               {/* Date number */}
-              <span style={{
-                fontSize: 12,
-                fontWeight: today ? 700 : selected ? 600 : 500,
-                color: today
-                  ? "var(--m-text)"
-                  : selected
-                  ? "var(--foreground)"
-                  : "var(--foreground)",
-                lineHeight: 1,
-              }}>
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: today ? 700 : selected ? 600 : 500,
+                  color: today
+                    ? "var(--m-text)"
+                    : selected
+                    ? "var(--foreground)"
+                    : "var(--foreground)",
+                  lineHeight: 1,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
                 {day.getDate()}
               </span>
 
-              {/* Event dots */}
-              <div style={{
-                display: "flex",
-                justifyContent: "center",
-                gap: 2,
-                minHeight: 7,
-                flexWrap: "nowrap",
-                overflow: "hidden",
-              }}>
-                {events.slice(0, 3).map((event, i) => (
-                  <span
-                    key={i}
-                    className="calendar-event-dot"
-                    style={{
-                      background: EVENT_COLOR[event.type],
-                      width: 5,
-                      height: 5,
-                      boxShadow: selected ? `0 0 4px ${EVENT_COLOR[event.type]}99` : undefined,
-                    }}
-                  />
-                ))}
-                {events.length > 3 && (
-                  <span style={{
-                    fontSize: 7,
-                    color: "var(--muted-fg)",
-                    lineHeight: "5px",
-                    fontWeight: 700,
-                  }}>+</span>
-                )}
-              </div>
+              {/* Event pill bars — always rendered to keep cell height stable */}
+              <DayPills events={events} selected={selected} />
             </button>
           );
         })}
@@ -191,6 +273,8 @@ function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGri
     </div>
   );
 }
+
+// ─── Event detail panel ───────────────────────────────────────────────────────
 
 interface EventDetailPanelProps {
   selectedDate: Date;
@@ -207,8 +291,8 @@ function EventDetailPanel({ selectedDate, events, currentWeek, onClose, onTestTa
   return (
     <div
       style={{
-        margin: "0 0 12px 0",
-        borderRadius: 10,
+        margin: "0 0 14px 0",
+        borderRadius: 12,
         overflow: "hidden",
         border: "1px solid var(--border)",
         background: "var(--card)",
@@ -217,78 +301,188 @@ function EventDetailPanel({ selectedDate, events, currentWeek, onClose, onTestTa
     >
       {/* Panel header */}
       <div
-        className="flex items-center justify-between px-3 py-2"
-        style={{ borderBottom: "1px solid var(--border-subtle)", background: "var(--muted)" }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "10px 12px 10px 14px",
+          borderBottom: "1px solid var(--border-subtle)",
+          background: "var(--muted)",
+        }}
       >
-        <div className="flex items-center gap-2">
-          <span className="text-[12px] font-semibold text-foreground tabular-nums">
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: "var(--foreground)",
+              fontVariantNumeric: "tabular-nums",
+              letterSpacing: "-0.01em",
+            }}
+          >
             {formatHrDate(selectedDate)}
           </span>
+          {/* Week badge — purely informational, styled distinctly from interactive chips */}
           <span
-            className="text-[10px] font-semibold px-1.5 py-0.5 rounded tabular-nums"
             style={{
+              fontSize: 10,
+              fontWeight: 600,
+              padding: "2px 7px",
+              borderRadius: 6,
+              fontVariantNumeric: "tabular-nums",
               background: isCurrentWeek
                 ? "color-mix(in srgb, var(--m-accent) 20%, transparent)"
-                : "transparent",
+                : "color-mix(in srgb, var(--muted-fg) 12%, transparent)",
               color: isCurrentWeek ? "var(--m-text)" : "var(--muted-fg)",
+              letterSpacing: "0.02em",
+              userSelect: "none",
             }}
           >
             T{week}{isCurrentWeek ? " · Sada" : ""}
           </span>
         </div>
+
+        {/* Close — explicit label so it reads as an action, not a decoration */}
         <button
           onClick={onClose}
-          className="text-muted-fg hover:text-foreground t-fast transition-colors"
-          style={{ fontSize: 16, lineHeight: 1, padding: "2px 4px" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            fontSize: 11,
+            fontWeight: 600,
+            color: "var(--muted-fg)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "4px 6px",
+            borderRadius: 6,
+            lineHeight: 1,
+          }}
+          aria-label="Zatvori detalj"
         >
-          ×
+          <span style={{ fontSize: 15, lineHeight: 1 }}>×</span>
         </button>
       </div>
 
       {/* Event list */}
-      <div className="px-3 py-2.5">
+      <div style={{ padding: "10px 14px 12px" }}>
         {events.length === 0 ? (
-          <p className="text-[11px] text-muted-fg">Nema rokova na ovaj datum.</p>
+          <p style={{ fontSize: 12, color: "var(--muted-fg)", margin: 0 }}>
+            Nema rokova na ovaj datum.
+          </p>
         ) : (
-          <div className="space-y-2">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {events.map((event, i) => {
               const subj = subjectMap.get(event.subjectId);
+              const cc = getCourseColor(event.subjectId);
+              const isTest = TEST_TYPES.has(event.type);
+              const barColor = resolveEventColor(event);
+
               return (
-                <div
+                <button
                   key={i}
-                  className="flex items-start gap-2.5"
-                  onClick={() => TEST_TYPES.has(event.type) && onTestTap?.(event)}
+                  onClick={() => isTest && onTestTap?.(event)}
+                  disabled={!isTest || !onTestTap}
                   style={{
-                    paddingLeft: 9,
-                    borderLeft: `3px solid ${EVENT_COLOR[event.type]}`,
-                    cursor: TEST_TYPES.has(event.type) && onTestTap ? "pointer" : undefined,
+                    all: "unset",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    borderRadius: 6,
+                    background: `color-mix(in srgb, ${barColor} 6%, transparent)`,
+                    padding: "8px 10px",
+                    cursor: isTest && onTestTap ? "pointer" : "default",
+                    boxSizing: "border-box",
+                    width: "100%",
                   }}
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[12px] font-semibold text-foreground">
+                  {/* Colored left stripe — the visual accent bar */}
+                  <span
+                    style={{
+                      width: 3,
+                      minWidth: 3,
+                      alignSelf: "stretch",
+                      borderRadius: 2,
+                      background: barColor,
+                      flexShrink: 0,
+                    }}
+                  />
+
+                  {/* Text block */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        flexWrap: "wrap",
+                        marginBottom: 2,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: "var(--foreground)",
+                          lineHeight: 1.2,
+                        }}
+                      >
                         {TYPE_LABEL[event.type]}
                       </span>
-                      <span className="text-[11px] text-muted-fg truncate">
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: cc.text,
+                          lineHeight: 1.2,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          maxWidth: 120,
+                        }}
+                      >
                         {subj?.short_name ?? event.subjectId}
                       </span>
                     </div>
                     {subj?.full_name && (
-                      <p className="text-[10px] text-muted-fg mt-0.5 truncate opacity-70">
+                      <p
+                        style={{
+                          fontSize: 10,
+                          color: "var(--muted-fg)",
+                          margin: 0,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          opacity: 0.7,
+                        }}
+                      >
                         {subj.full_name}
                       </p>
                     )}
                   </div>
-                  <span
-                    className="text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 tabular-nums"
-                    style={{
-                      background: `color-mix(in srgb, ${EVENT_COLOR[event.type]} 15%, transparent)`,
-                      color: EVENT_COLOR[event.type],
-                    }}
-                  >
-                    {TYPE_LABEL[event.type].toUpperCase().slice(0, 3)}
-                  </span>
-                </div>
+
+                  {/* Tap-to-detail affordance — only for test types */}
+                  {isTest && onTestTap && (
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: "0.04em",
+                        color: barColor,
+                        background: `color-mix(in srgb, ${barColor} 14%, transparent)`,
+                        border: `1px solid color-mix(in srgb, ${barColor} 30%, transparent)`,
+                        padding: "3px 8px",
+                        borderRadius: 5,
+                        flexShrink: 0,
+                        textTransform: "uppercase",
+                        lineHeight: 1,
+                      }}
+                    >
+                      Otvori
+                    </span>
+                  )}
+                </button>
               );
             })}
           </div>
@@ -297,6 +491,93 @@ function EventDetailPanel({ selectedDate, events, currentWeek, onClose, onTestTa
     </div>
   );
 }
+
+// ─── Legend ───────────────────────────────────────────────────────────────────
+
+function CalendarLegend() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: "10px 20px",
+        marginTop: 12,
+        paddingTop: 12,
+        borderTop: "1px solid var(--border-subtle)",
+      }}
+    >
+      {/* Event type legend — pill bars to match the calendar cells */}
+      {([
+        ["kolokvij", "Kolokvij"] as const,
+        ["ispit", "Ispit"] as const,
+        ["obrana", "Obrana"] as const,
+        ["kontrolna", "Ostalo"] as const,
+      ]).map(([type, label]) => (
+        <div
+          key={type}
+          style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--muted-fg)" }}
+        >
+          <span
+            style={{
+              display: "inline-block",
+              width: 18,
+              height: 6,
+              borderRadius: 3,
+              background: EVENT_COLOR[type],
+              flexShrink: 0,
+            }}
+          />
+          <span style={{ fontWeight: 500 }}>{label}</span>
+        </div>
+      ))}
+
+      {/* Today indicator */}
+      <div
+        style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--muted-fg)" }}
+      >
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 18,
+            height: 18,
+            borderRadius: 4,
+            background: "color-mix(in srgb, var(--m-accent) 12%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--m-accent) 40%, transparent)",
+            fontSize: 9,
+            fontWeight: 700,
+            color: "var(--m-text)",
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {new Date().getDate()}
+        </span>
+        <span style={{ fontWeight: 500 }}>Danas</span>
+      </div>
+
+      {/* Dense exam day indicator */}
+      <div
+        style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--muted-fg)" }}
+      >
+        <span
+          style={{
+            display: "inline-flex",
+            width: 18,
+            height: 18,
+            borderRadius: 4,
+            border: "1px solid color-mix(in srgb, var(--u-approaching) 50%, transparent)",
+            background: "color-mix(in srgb, var(--u-approaching) 8%, transparent)",
+            flexShrink: 0,
+          }}
+        />
+        <span style={{ fontWeight: 500 }}>Provjera</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Root export ──────────────────────────────────────────────────────────────
 
 export function SemesterTimeline({
   currentWeek,
@@ -367,29 +648,67 @@ export function SemesterTimeline({
           overflow: "hidden",
         }}
       >
-        {/* Handle */}
-        <div className="flex justify-center pt-3 pb-2" style={{ flexShrink: 0 }}>
-          <div className="w-10 h-1 rounded-full bg-muted-fg/30" />
+        {/* Drag handle */}
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: 12, paddingBottom: 6, flexShrink: 0 }}>
+          <div
+            style={{
+              width: 36,
+              height: 4,
+              borderRadius: 2,
+              background: "color-mix(in srgb, var(--muted-fg) 35%, transparent)",
+            }}
+          />
         </div>
 
-        {/* Title row */}
-        <div className="flex items-center justify-between px-4 pb-3" style={{ flexShrink: 0 }}>
+        {/* Sheet title row */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 16px 14px",
+            flexShrink: 0,
+          }}
+        >
           <div>
-            <span className="text-[13px] font-bold text-foreground">Semestar</span>
-            <span className="text-[11px] text-muted-fg ml-2 uppercase tracking-[0.06em]">Ožujak &ndash; Lipanj 2026</span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: "var(--foreground)", letterSpacing: "-0.02em" }}>
+              Semestar
+            </span>
+            <span
+              style={{
+                fontSize: 11,
+                color: "var(--muted-fg)",
+                marginLeft: 8,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+              }}
+            >
+              Ožujak&ndash;Lipanj 2026
+            </span>
           </div>
           <button
             onClick={onClose}
-            className="text-[11px] font-semibold text-muted-fg hover:text-foreground t-fast transition-colors px-2 py-1 rounded-md hover:bg-muted"
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: "var(--muted-fg)",
+              background: "var(--muted)",
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              padding: "5px 12px",
+              cursor: "pointer",
+              lineHeight: 1,
+              WebkitTapHighlightColor: "transparent",
+            }}
           >
             Zatvori
           </button>
         </div>
 
-        {/* Scrollable area */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "0 16px 32px" }}>
+        {/* Scrollable calendar body */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "0 16px 40px" }}>
 
-          {/* Event detail panel */}
+          {/* Sticky day-detail panel */}
           {selectedKey && selectedDate && (
             <EventDetailPanel
               selectedDate={selectedDate}
@@ -412,54 +731,7 @@ export function SemesterTimeline({
             />
           ))}
 
-          {/* Legend */}
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "8px 18px",
-              marginTop: 8,
-              paddingTop: 10,
-              borderTop: "1px solid var(--border-subtle)",
-            }}
-          >
-            {([
-              ["kolokvij", "Kolokvij"],
-              ["ispit", "Ispit"],
-              ["obrana", "Obrana"],
-              ["kontrolna", "Ostalo"],
-            ] as const).map(([type, label]) => (
-              <div key={type} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
-                <span
-                  className="calendar-event-dot"
-                  style={{ background: EVENT_COLOR[type], width: 6, height: 6 }}
-                />
-                <span style={{ color: "var(--muted-fg)", fontWeight: 500 }}>{label}</span>
-              </div>
-            ))}
-            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
-              <span style={{
-                width: 13,
-                height: 11,
-                borderRadius: 3,
-                background: "color-mix(in srgb, var(--m-accent) 10%, transparent)",
-                display: "inline-block",
-                border: "1px solid color-mix(in srgb, var(--m-accent) 35%, transparent)",
-              }} />
-              <span style={{ color: "var(--muted-fg)", fontWeight: 500 }}>Danas</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
-              <span style={{
-                width: 13,
-                height: 11,
-                borderRadius: 3,
-                display: "inline-block",
-                border: "1.5px solid var(--foreground)",
-                background: "color-mix(in srgb, var(--foreground) 8%, transparent)",
-              }} />
-              <span style={{ color: "var(--muted-fg)", fontWeight: 500 }}>Odabrano</span>
-            </div>
-          </div>
+          <CalendarLegend />
         </div>
       </div>
     </>

@@ -352,19 +352,26 @@ body {
   right: 0;
   z-index: 40;
   display: flex;
-  background: var(--background);
+  /* Frosted glass matches TopBar */
+  background: color-mix(in srgb, var(--background) 88%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-top: 1px solid var(--border);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Respect notched phones — padding stacks on top of the safe area */
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 4px);
 }
 
 .bottom-tab {
   flex: 1;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 8px 0 6px;
+  gap: 3px;
+  /* 49px is the iOS standard tab bar tap height; satisfies 44pt min */
+  min-height: 49px;
+  padding: 6px 0 4px;
   background: none;
   border: none;
   cursor: pointer;
@@ -373,9 +380,32 @@ body {
   letter-spacing: 0.03em;
   color: var(--muted-fg);
   transition: color var(--duration-quick) var(--ease-out-expo);
+  -webkit-tap-highlight-color: transparent;
 }
+
 .bottom-tab[data-active="true"] {
   color: var(--foreground);
+}
+
+/* Active indicator — 3px pill above the icon */
+.bottom-tab-dot {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 24px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--m-accent);
+  transition:
+    transform var(--duration-quick) var(--ease-out-expo),
+    opacity var(--duration-quick) var(--ease-out-expo);
+  opacity: 0;
+}
+
+.bottom-tab[data-active="true"] .bottom-tab-dot {
+  transform: translateX(-50%) scaleX(1);
+  opacity: 1;
 }
 
 /* ── Filter chips ────────────────────────────────────────────── */
@@ -465,23 +495,34 @@ body {
 }
 
 .calendar-cell {
-  min-height: 40px;
+  /* 44px minimum — comfortable thumb tap target on S24 Ultra */
+  min-height: 44px;
   border-bottom: 1px solid var(--border-subtle);
-  padding: 2px 4px;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  padding: 2px 3px;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   position: relative;
+  background: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--duration-quick) var(--ease-out-expo);
+}
+
+.calendar-cell:active {
+  background: color-mix(in srgb, var(--foreground) 7%, transparent) !important;
 }
 
 .calendar-today {
-  background: color-mix(in srgb, var(--m-accent) 8%, transparent);
+  background: color-mix(in srgb, var(--m-accent) 10%, transparent);
 }
 
 .calendar-selected {
-  background: color-mix(in srgb, var(--foreground) 9%, transparent);
-  outline: 1.5px solid var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  outline: 1.5px solid color-mix(in srgb, var(--foreground) 55%, transparent);
   outline-offset: -1.5px;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
 .calendar-event-dot {
@@ -578,4 +619,135 @@ body {
 .prep-check[data-checked="true"] .prep-check-mark {
   opacity: 1;
   transform: scale(1);
+}
+
+/* ── Week stepper touch targets ──────────────────────────────── */
+.week-stepper-btn {
+  /* 44px minimum tap target, icon centered */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted-fg);
+  transition:
+    color var(--duration-quick) var(--ease-out-expo),
+    background var(--duration-quick) var(--ease-out-expo);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.week-stepper-btn:hover {
+  color: var(--foreground);
+  background: var(--muted);
+}
+
+.week-stepper-btn:disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* ── NextClassStrip ──────────────────────────────────────────── */
+.next-class-strip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  /* Slightly taller than before — easier to tap while scrolling */
+  min-height: 48px;
+  padding: 0 14px 0 0;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--card);
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--duration-quick) var(--ease-out-expo);
+}
+
+.next-class-strip:active {
+  background: var(--card-hover);
+}
+
+/* 3px accent bar on the left — same token as .slot-card-m::before */
+.next-class-bar {
+  flex-shrink: 0;
+  width: 3px;
+  align-self: stretch;
+}
+
+.next-class-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 0;
+}
+
+.next-class-top {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.next-class-name {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.next-class-type {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted-fg);
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.next-class-meta {
+  font-size: 11px;
+  color: var(--muted-fg);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0;
+}
+
+.next-class-time {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  padding: 3px 7px;
+  border-radius: 5px;
+  white-space: nowrap;
+  transition:
+    color var(--duration-quick) var(--ease-out-expo),
+    background var(--duration-quick) var(--ease-out-expo);
+}
+
+/* Progress bar at bottom — replaces the old absolute-positioned div */
+.next-class-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  transition: width 1s linear;
+  border-radius: 0 2px 2px 0;
 }
