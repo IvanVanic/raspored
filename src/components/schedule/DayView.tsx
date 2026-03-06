@@ -101,9 +101,9 @@ export function DayView({
   });
 
   return (
-    <div>
+    <div className="flex flex-col" style={{ minHeight: "calc(100vh - 140px)" }}>
       {/* Day tabs */}
-      <div className="flex border-b border-border">
+      <div className="flex border-b border-border shrink-0">
         {data.days_order.map((day, i) => (
           <button
             key={day}
@@ -120,9 +120,9 @@ export function DayView({
         ))}
       </div>
 
-      {/* Swipeable content */}
+      {/* Swipeable content — fills remaining space */}
       <div
-        className="px-4 pt-4 pb-6"
+        className="px-4 pt-4 pb-6 flex-1"
         {...swipeHandlers}
       >
         {overrideNote && (
