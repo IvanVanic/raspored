@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import type { Slot } from "@/data/types";
-import { data } from "@/data/schedule";
+import { data, getSlotsForDayIdx } from "@/data/schedule";
 import { curriculum } from "@/data/curriculum";
 import { getCurrentWeek } from "@/lib/date-utils";
 import { getSubjectUrgencies } from "@/lib/extraction";
@@ -31,15 +31,32 @@ export function DesktopGrid({ onSlotClick }: { onSlotClick: (slot: Slot) => void
 
   const scheduleGrid = useMemo(() => {
     const grid: Record<string, Record<string, Slot | null>> = {};
-    for (const ts of timeSlots) {
-      grid[ts.start] = {};
-      for (const day of data.days_order) {
-        const slots = data.personal_schedule[day] ?? [];
-        const found = slots.find((s) => s.start === ts.start) ?? null;
-        grid[ts.start][day] = found;
+    // Collect all unique start times (regular + override slots)
+    const allStarts = new Set(timeSlots.map((ts) => ts.start));
+    for (let i = 0; i < data.days_order.length; i++) {
+      for (const s of getSlotsForDayIdx(i)) allStarts.add(s.start);
+    }
+    const sortedStarts = [...allStarts].sort();
+
+    for (const start of sortedStarts) {
+      grid[start] = {};
+      for (let i = 0; i < data.days_order.length; i++) {
+        const day = data.days_order[i];
+        const slots = getSlotsForDayIdx(i);
+        grid[start][day] = slots.find((s) => s.start === start) ?? null;
       }
     }
-    return grid;
+    return { grid, rows: sortedStarts };
+  }, [timeSlots]);
+
+  // Build end-time lookup: override slots may have non-standard end times
+  const endTimeMap = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const ts of timeSlots) m[ts.start] = ts.end;
+    for (let i = 0; i < data.days_order.length; i++) {
+      for (const s of getSlotsForDayIdx(i)) m[s.start] = s.end;
+    }
+    return m;
   }, [timeSlots]);
 
   return (
@@ -64,18 +81,18 @@ export function DesktopGrid({ onSlotClick }: { onSlotClick: (slot: Slot) => void
             </tr>
           </thead>
           <tbody>
-            {timeSlots.map((ts) => (
-              <tr key={ts.start} className="h-[72px]">
+            {scheduleGrid.rows.map((start) => (
+              <tr key={start} className="h-[72px]">
                 <td className="time-col p-2.5 align-top">
                   <div className="text-[11px] font-semibold text-foreground tabular-nums leading-none">
-                    {ts.start}
+                    {start}
                   </div>
                   <div className="text-[10px] text-muted-fg/60 tabular-nums leading-none mt-0.5">
-                    {ts.end}
+                    {endTimeMap[start] ?? ""}
                   </div>
                 </td>
                 {data.days_order.map((day) => {
-                  const slot = scheduleGrid[ts.start]?.[day] ?? null;
+                  const slot = scheduleGrid.grid[start]?.[day] ?? null;
                   return (
                     <td
                       key={day}

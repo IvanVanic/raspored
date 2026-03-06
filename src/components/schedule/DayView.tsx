@@ -2,7 +2,7 @@
 
 import { useMemo, useRef } from "react";
 import type { Slot } from "@/data/types";
-import { data } from "@/data/schedule";
+import { data, getSlotsForDayIdx, getOverrideNote } from "@/data/schedule";
 import { curriculum } from "@/data/curriculum";
 import { getCurrentWeek } from "@/lib/date-utils";
 import { getSubjectUrgencies } from "@/lib/extraction";
@@ -58,7 +58,8 @@ export function DayView({
   onSlotClick: (slot: Slot) => void;
 }) {
   const dayName = data.days_order[dayIdx];
-  const slots = data.personal_schedule[dayName] ?? [];
+  const slots = getSlotsForDayIdx(dayIdx);
+  const overrideNote = getOverrideNote(dayIdx);
   const currentWeek = getCurrentWeek();
 
   const urgencies = useMemo(() => getSubjectUrgencies(curriculum), []);
@@ -112,6 +113,11 @@ export function DayView({
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
+        {overrideNote && (
+          <div className="mb-3 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[12px] text-amber-400 leading-snug">
+            {overrideNote}
+          </div>
+        )}
         {slots.length === 0 ? (
           <div className="null-state">
             <p>Nema nastave</p>

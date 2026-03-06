@@ -3,7 +3,7 @@
  * Pure module: no React, no side effects.
  */
 
-import { data } from "@/data/schedule";
+import { data, getSlotsForDayIdx } from "@/data/schedule";
 import type { Slot } from "@/data/types";
 
 function parseTime(t: string): number {
@@ -34,7 +34,7 @@ export function getNextSlot(currentMinutes: number): NextSlotResult | null {
   for (let offset = 0; offset < 5; offset++) {
     const dayIdx = (startIdx + offset) % 5;
     const dayName = daysOrder[dayIdx];
-    const slots = data.personal_schedule[dayName] ?? [];
+    const slots = getSlotsForDayIdx(dayIdx);
 
     for (const slot of slots) {
       const start = parseTime(slot.start);

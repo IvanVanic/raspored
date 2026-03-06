@@ -155,6 +155,17 @@
     ]
   },
 
+  "date_overrides": {
+    "2026-03-10": {
+      "note": "OVIS: nema predavanja, vježbe za sve u terminu predavanja 12:15-13:45",
+      "slots": [
+        { "subject_id": "upw",  "start": "10:00", "end": "11:30", "type": "P", "group": null, "prof": "Načinović Prskalo", "room": "028", "status": "M" },
+        { "subject_id": "ovis", "start": "12:15", "end": "13:45", "type": "V", "group": null, "prof": "Maksimović",        "room": "028", "status": "M" },
+        { "subject_id": "oi",   "start": "14:00", "end": "15:30", "type": "V", "group": "G2", "prof": "Franković Lučić",   "room": "359", "status": "M" }
+      ]
+    }
+  },
+
   "day_time_slots": [
     { "start": "08:15", "end": "09:45" },
     { "start": "10:00", "end": "11:30" },

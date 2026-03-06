@@ -32,6 +32,11 @@ export interface TimeSlot {
   end: string;
 }
 
+export interface DateOverride {
+  note: string;
+  slots: Slot[];
+}
+
 export interface ScheduleData {
   meta: {
     title: string;
@@ -45,6 +50,7 @@ export interface ScheduleData {
   type_definitions: Record<string, string>;
   subjects: Subject[];
   personal_schedule: Record<string, Slot[]>;
+  date_overrides?: Record<string, DateOverride>;
   day_time_slots: TimeSlot[];
   days_order: string[];
 }
