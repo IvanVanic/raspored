@@ -38,12 +38,12 @@ export function TopBar({
     >
       <div className="px-4 py-3 flex items-center justify-between gap-3">
         {/* Title block */}
-        <div className="min-w-0">
+        <div className="min-w-0 shrink-0">
           <h1 className="text-[15px] font-bold tracking-[-0.02em] text-foreground leading-none">
             {view === "raspored" ? "Raspored" : "Rokovi"}
           </h1>
-          <p className="text-[11px] text-muted-fg mt-1 tracking-[0.01em]">
-            {todayString()} &middot; FIDIT 25./26.
+          <p className="text-[11px] text-muted-fg mt-1 tracking-[0.01em] whitespace-nowrap">
+            {todayString()} · FIDIT 25./26.
           </p>
         </div>
 
@@ -104,17 +104,6 @@ export function TopBar({
                 </button>
               )}
 
-              {/* "danas" jump — shown only when viewing a different week */}
-              {view === "raspored" && viewingWeek !== currentWeek && (
-                <button
-                  onClick={() => onWeekChange(currentWeek)}
-                  className="px-1.5 py-0.5 text-[9px] font-semibold tracking-[0.04em] rounded bg-accent/20 text-accent hover:bg-accent/30 t-fast transition-colors"
-                  title="Skoči na trenutni tjedan"
-                >
-                  danas
-                </button>
-              )}
-
               {/* Week badge */}
               <button
                 onClick={onWeekBadgeTap}
@@ -166,6 +155,16 @@ export function TopBar({
           )}
         </div>
       </div>
+
+      {/* "danas" jump strip — shown only when viewing a different week */}
+      {view === "raspored" && viewingWeek !== currentWeek && (
+        <button
+          onClick={() => onWeekChange(currentWeek)}
+          className="w-full py-1.5 text-[10px] font-medium tracking-[0.02em] text-center bg-accent/10 text-accent hover:bg-accent/15 t-fast transition-colors border-t border-accent/10"
+        >
+          ↩ Natrag na tjedan {currentWeek}
+        </button>
+      )}
     </header>
   );
 }
