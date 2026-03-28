@@ -5,7 +5,7 @@
     "faculty": "Fakultet informatike i digitalnih tehnologija (FIDIT), Rijeka",
     "year": "2025./2026.",
     "semester": "Ljetni (Semestar II + IV kombinirano)",
-    "generated": "2026-03-04"
+    "generated": "2026-03-28"
   },
 
   "status_definitions": {
@@ -65,7 +65,7 @@
       "semester": "II",
       "status": "M",
       "slots": [
-        { "day": "Utorak", "start": "12:00", "end": "13:30", "type": "P", "group": null, "prof": "Maksimović", "room": "028" },
+        { "day": "Utorak", "start": "12:15", "end": "13:45", "type": "P", "group": null, "prof": "Maksimović", "room": "028" },
         { "day": "Utorak", "start": "16:00", "end": "17:30", "type": "V", "group": "G1", "prof": "Zubović Žutolija", "room": "028" },
         { "day": "Utorak", "start": "18:00", "end": "19:30", "type": "V", "group": "G2", "prof": "Zubović Žutolija", "room": "028" }
       ],
@@ -83,7 +83,7 @@
         { "day": "Srijeda", "start": "12:00", "end": "13:30", "type": "V", "group": "G2", "prof": "Ljubobratović", "room": "350" },
         { "day": "Srijeda", "start": "14:00", "end": "15:30", "type": "V", "group": "G3", "prof": "Ljubobratović", "room": "350" }
       ],
-      "assigned_group": "G1"
+      "assigned_group": "G3"
     },
     {
       "id": "aor",
@@ -136,14 +136,14 @@
     ],
     "Utorak": [
       { "subject_id": "upw",   "start": "10:00", "end": "11:30", "type": "P", "group": null, "prof": "Načinović Prskalo",  "room": "028", "status": "M" },
-      { "subject_id": "ovis",  "start": "12:00", "end": "13:30", "type": "P", "group": null, "prof": "Maksimović",         "room": "028", "status": "M" },
+      { "subject_id": "ovis",  "start": "12:15", "end": "13:45", "type": "P", "group": null, "prof": "Maksimović",         "room": "028", "status": "M" },
       { "subject_id": "oi",    "start": "14:00", "end": "15:30", "type": "V", "group": "G2", "prof": "Franković Lučić",    "room": "359", "status": "M" },
       { "subject_id": "ovis",  "start": "18:00", "end": "19:30", "type": "V", "group": "G2", "prof": "Zubović Žutolija",   "room": "028", "status": "M" }
     ],
     "Srijeda": [
       { "subject_id": "uasp",  "start": "08:15", "end": "09:45", "type": "P", "group": null, "prof": "Matetić / Brkić Bakarić", "room": "028", "status": "E" },
-      { "subject_id": "uasp",  "start": "10:00", "end": "11:30", "type": "V", "group": "G1", "prof": "Ljubobratović",           "room": "350", "status": "E" },
-      { "subject_id": "os",    "start": "12:00", "end": "13:30", "type": "V", "group": "G2", "prof": "Slavuj",                  "room": "366", "status": "M" }
+      { "subject_id": "os",    "start": "12:00", "end": "13:30", "type": "V", "group": "G2", "prof": "Slavuj",                  "room": "366", "status": "M" },
+      { "subject_id": "uasp",  "start": "14:00", "end": "15:30", "type": "V", "group": "G3", "prof": "Ljubobratović",           "room": "350", "status": "E" }
     ],
     "Četvrtak": [
       { "subject_id": "aor",    "start": "10:00", "end": "11:30", "type": "P", "group": null, "prof": "Ipšić",            "room": "028", "status": "E" },
@@ -166,11 +166,46 @@
     }
   },
 
+  "online_sessions": {
+    "2026-03-09": { "upw": ["V"] },
+    "2026-03-12": { "modpod": ["P"] },
+    "2026-03-13": { "modpod": ["V"] },
+    "2026-03-16": { "upw": ["V"] },
+    "2026-03-23": { "upw": ["V"] },
+    "2026-04-02": { "modpod": ["P"] },
+    "2026-04-03": { "modpod": ["V"], "oi": ["P"] },
+    "2026-04-06": { "os": ["P"] },
+    "2026-04-07": { "upw": ["P"] },
+    "2026-04-09": { "modpod": ["P"] },
+    "2026-04-14": { "oi": ["V"], "upw": ["P"] },
+    "2026-04-16": { "modpod": ["P"] },
+    "2026-04-17": { "oi": ["P"] },
+    "2026-04-20": { "upw": ["V"] },
+    "2026-04-24": { "oi": ["P"] },
+    "2026-04-28": { "upw": ["P"] },
+    "2026-04-30": { "modpod": ["P"], "aor": ["V"] },
+    "2026-05-01": { "oi": ["P"] },
+    "2026-05-12": { "upw": ["P"] },
+    "2026-05-14": { "modpod": ["P"] },
+    "2026-05-18": { "mat2": ["V"] },
+    "2026-05-19": { "oi": ["V"], "ovis": ["V"], "upw": ["P"] },
+    "2026-05-21": { "modpod": ["P"] },
+    "2026-05-22": { "oi": ["P"] },
+    "2026-05-25": { "os": ["P"] },
+    "2026-05-26": { "oi": ["V"], "upw": ["P"] },
+    "2026-06-02": { "oi": ["V"], "ovis": ["V"] },
+    "2026-06-04": { "aor": ["V"] },
+    "2026-06-05": { "modpod": ["V"], "oi": ["P"] },
+    "2026-06-08": { "upw": ["V"] },
+    "2026-06-10": { "uasp": ["P"] }
+  },
+
   "day_time_slots": [
     { "start": "08:15", "end": "09:45" },
     { "start": "10:00", "end": "11:30" },
     { "start": "11:45", "end": "13:15" },
     { "start": "12:00", "end": "13:30" },
+    { "start": "12:15", "end": "13:45" },
     { "start": "14:00", "end": "15:30" },
     { "start": "16:00", "end": "17:30" },
     { "start": "18:00", "end": "19:30" }

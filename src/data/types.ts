@@ -7,6 +7,7 @@ export interface Slot {
   prof: string;
   room: string;
   status: "M" | "E";
+  online?: boolean;
 }
 
 export interface Subject {
@@ -51,6 +52,7 @@ export interface ScheduleData {
   subjects: Subject[];
   personal_schedule: Record<string, Slot[]>;
   date_overrides?: Record<string, DateOverride>;
+  online_sessions?: Record<string, Record<string, string[]>>;
   day_time_slots: TimeSlot[];
   days_order: string[];
 }

@@ -18,13 +18,22 @@ export function getDateForDayIdx(dayIdx: number, week?: number): string {
 
 /**
  * Returns the schedule slots for a given dayIdx, checking date_overrides first.
+ * Merges `online: true` from online_sessions when applicable.
  */
 export function getSlotsForDayIdx(dayIdx: number, week?: number): Slot[] {
   const dateStr = getDateForDayIdx(dayIdx, week);
   const override = data.date_overrides?.[dateStr];
-  if (override) return override.slots;
-  const dayName = data.days_order[dayIdx];
-  return data.personal_schedule[dayName] ?? [];
+  const base = override
+    ? override.slots
+    : data.personal_schedule[data.days_order[dayIdx]] ?? [];
+
+  const onlineMap = data.online_sessions?.[dateStr];
+  if (!onlineMap) return base;
+
+  return base.map((slot) => {
+    const types = onlineMap[slot.subject_id];
+    return types?.includes(slot.type) ? { ...slot, online: true } : slot;
+  });
 }
 
 /**
