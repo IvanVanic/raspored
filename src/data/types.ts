@@ -100,4 +100,5 @@ export interface TemporalContext {
   semesterProgress: number;
   semesterPhase: SemesterPhase;
   smartDefaultDay: number;
+  smartDefaultWeek: number;
 }

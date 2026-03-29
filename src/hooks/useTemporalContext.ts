@@ -11,6 +11,15 @@ import { useState, useEffect } from "react";
 import type { TemporalContext, SemesterPhase } from "@/data/types";
 import { getCurrentWeek, TOTAL_WEEKS } from "@/lib/date-utils";
 
+/** Whether the smart default day points to next week's Monday. */
+function needsWeekAdvance(isWeekend: boolean, jsDay: number, hour: number): boolean {
+  // Weekend → showing next Monday = next week
+  if (isWeekend) return true;
+  // Friday evening after 20:00 → showing next Monday = next week
+  if (jsDay === 5 && hour >= 20) return true;
+  return false;
+}
+
 /** Croatian day names in schedule order. Index matches days_order array. */
 const DAYS_ORDER: readonly string[] = [
   "Ponedjeljak",
@@ -83,6 +92,11 @@ function buildContext(): TemporalContext {
     }
   }
 
+  // --- Smart default week ---
+  const smartDefaultWeek = needsWeekAdvance(isWeekend, jsDay, hour)
+    ? Math.min(currentWeek + 1, TOTAL_WEEKS)
+    : currentWeek;
+
   return {
     currentWeek,
     dayOfWeek: jsDay,
@@ -92,6 +106,7 @@ function buildContext(): TemporalContext {
     semesterProgress,
     semesterPhase,
     smartDefaultDay,
+    smartDefaultWeek,
   };
 }
 
