@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { curriculum } from "@/data/curriculum";
 import { subjectMap } from "@/data/schedule";
 import { extractCriticalDates } from "@/lib/extraction";
-import { SEMESTER_START, TOTAL_WEEKS, formatHrDate, getWeekForDate } from "@/lib/date-utils";
+import { semesterStartLocal, TOTAL_WEEKS, formatHrDate, getWeekForDate } from "@/lib/date-utils";
 import { TYPE_LABEL, EVENT_COLOR, TEST_TYPES, getCourseColor, COURSE_COLOR } from "@/lib/labels";
 import type { CurriculumEntry, CriticalDate } from "@/data/types";
 
@@ -30,7 +30,7 @@ function isToday(date: Date): boolean {
 }
 
 function getTeachingWeek(date: Date): number | null {
-  const start = new Date(SEMESTER_START);
+  const start = semesterStartLocal();
   const diff = date.getTime() - start.getTime();
   const week = Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1;
   if (week >= 1 && week <= TOTAL_WEEKS) return week;

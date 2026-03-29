@@ -55,12 +55,14 @@ export function DayView({
   viewingWeek,
   onWeekChange,
   onSlotClick,
+  isWeekend,
 }: {
   dayIdx: number;
   setDayIdx: (i: number) => void;
   viewingWeek: number;
   onWeekChange: (week: number) => void;
   onSlotClick: (slot: Slot) => void;
+  isWeekend?: boolean;
 }) {
   const dayName = data.days_order[dayIdx];
   const slots = getSlotsForDayIdx(dayIdx, viewingWeek);
@@ -125,6 +127,17 @@ export function DayView({
         className="px-4 pt-4 pb-6 flex-1"
         {...swipeHandlers}
       >
+        {isWeekend && dayIdx === 0 && (
+          <div className="mb-3 px-3 py-2 rounded-lg text-[12px] leading-snug"
+            style={{
+              background: "color-mix(in srgb, var(--muted-fg) 8%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--muted-fg) 15%, transparent)",
+              color: "var(--muted-fg)",
+            }}
+          >
+            Vikend — raspored za ponedjeljak
+          </div>
+        )}
         {overrideNote && (
           <div className="mb-3 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[12px] text-amber-400 leading-snug">
             {overrideNote}

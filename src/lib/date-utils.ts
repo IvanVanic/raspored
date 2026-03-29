@@ -9,6 +9,16 @@ const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 export const TOTAL_WEEKS = 15;
 
+/**
+ * Parse SEMESTER_START as local midnight (not UTC).
+ * `new Date("2026-03-02")` creates UTC midnight which causes off-by-one
+ * errors in timezones east of UTC (e.g. CET/CEST).
+ */
+export function semesterStartLocal(): Date {
+  const [y, m, d] = SEMESTER_START.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
 // Croatian day names in schedule order (index 0 = Monday, index 4 = Friday)
 const CROATIAN_DAY_NAMES: readonly string[] = [
   "Ponedjeljak",
@@ -23,7 +33,7 @@ const CROATIAN_DAY_NAMES: readonly string[] = [
  * Week 1 begins on SEMESTER_START (Monday, 2026-03-02).
  */
 export function getCurrentWeek(): number {
-  const start = new Date(SEMESTER_START);
+  const start = semesterStartLocal();
   const now = new Date();
   const elapsed = now.getTime() - start.getTime();
   const week = Math.floor(elapsed / MS_PER_WEEK) + 1;
@@ -35,7 +45,7 @@ export function getCurrentWeek(): number {
  * Dates before SEMESTER_START return 1; dates after week 15 return 15.
  */
 export function getWeekForDate(date: Date): number {
-  const start = new Date(SEMESTER_START);
+  const start = semesterStartLocal();
   const elapsed = date.getTime() - start.getTime();
   const week = Math.floor(elapsed / MS_PER_WEEK) + 1;
   return Math.min(Math.max(week, 1), TOTAL_WEEKS);
@@ -111,7 +121,7 @@ export function daysUntil(date: Date): number {
  * Week 1 starts on SEMESTER_START (which is a Monday).
  */
 export function getWeekDates(week: number): { monday: Date; friday: Date } {
-  const start = new Date(SEMESTER_START);
+  const start = semesterStartLocal();
   const monday = new Date(start.getTime() + (week - 1) * MS_PER_WEEK);
   const friday = new Date(monday.getTime() + 4 * MS_PER_DAY);
   return { monday, friday };

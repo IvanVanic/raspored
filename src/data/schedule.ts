@@ -1,6 +1,6 @@
 import scheduleData from "@/data/schedule-data.json";
 import type { ScheduleData, Slot } from "@/data/types";
-import { SEMESTER_START, getCurrentWeek } from "@/lib/date-utils";
+import { semesterStartLocal, getCurrentWeek } from "@/lib/date-utils";
 
 export const data = scheduleData as unknown as ScheduleData;
 export const subjectMap = new Map(data.subjects.map((s) => [s.id, s]));
@@ -11,7 +11,7 @@ export const subjectMap = new Map(data.subjects.map((s) => [s.id, s]));
  */
 export function getDateForDayIdx(dayIdx: number, week?: number): string {
   const w = week ?? getCurrentWeek();
-  const start = new Date(SEMESTER_START);
+  const start = semesterStartLocal();
   const d = new Date(start.getTime() + ((w - 1) * 7 + dayIdx) * 86_400_000);
   return d.toISOString().slice(0, 10);
 }

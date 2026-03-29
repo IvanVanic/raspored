@@ -31,6 +31,9 @@ export function getNextSlot(currentMinutes: number): NextSlotResult | null {
   const startIdx = isWeekend ? 0 : jsDay - 1; // 0=Mon … 4=Fri
   const daysOrder = data.days_order; // ["Ponedjeljak","Utorak","Srijeda","Četvrtak","Petak"]
 
+  // On weekends, Monday is 1 (Sunday) or 2 (Saturday) days away, not 0
+  const weekendOffset = isWeekend ? (jsDay === 0 ? 1 : 2) : 0;
+
   for (let offset = 0; offset < 5; offset++) {
     const dayIdx = (startIdx + offset) % 5;
     const dayName = daysOrder[dayIdx];
@@ -39,7 +42,7 @@ export function getNextSlot(currentMinutes: number): NextSlotResult | null {
     for (const slot of slots) {
       const start = parseTime(slot.start);
       const end = parseTime(slot.end);
-      const daysAhead = offset; // 0 = today, 1 = tomorrow, etc.
+      const daysAhead = weekendOffset + offset;
 
       if (daysAhead === 0) {
         // Today: only show if not yet ended

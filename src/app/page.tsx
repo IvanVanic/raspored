@@ -19,7 +19,7 @@ export default function Home() {
   const temporal = useTemporalContext();
   const [view, setView] = useState<View>("raspored");
   const [dayIdx, setDayIdx] = useState(temporal.smartDefaultDay);
-  const [viewingWeek, setViewingWeek] = useState(temporal.currentWeek);
+  const [viewingWeek, setViewingWeek] = useState(temporal.smartDefaultWeek);
   const [modalSlot, setModalSlot] = useState<Slot | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [testExpand, setTestExpand] = useState<{ subjectId: string; event: CriticalDate } | null>(null);
@@ -30,9 +30,9 @@ export default function Home() {
     if (!hydrated.current) {
       hydrated.current = true;
       setDayIdx(temporal.smartDefaultDay);
-      setViewingWeek(temporal.currentWeek);
+      setViewingWeek(temporal.smartDefaultWeek);
     }
-  }, [temporal.smartDefaultDay, temporal.currentWeek]);
+  }, [temporal.smartDefaultDay, temporal.smartDefaultWeek]);
 
   const onTestTap = (event: CriticalDate) => {
     setTestExpand({ subjectId: event.subjectId, event });
@@ -65,7 +65,7 @@ export default function Home() {
         <>
           {/* Mobile */}
           <div className="md:hidden">
-            <DayView dayIdx={dayIdx} setDayIdx={setDayIdx} viewingWeek={viewingWeek} onWeekChange={setViewingWeek} onSlotClick={setModalSlot} />
+            <DayView dayIdx={dayIdx} setDayIdx={setDayIdx} viewingWeek={viewingWeek} onWeekChange={setViewingWeek} onSlotClick={setModalSlot} isWeekend={temporal.isWeekend} />
           </div>
           {/* Desktop */}
           <div className="hidden md:block">
