@@ -23,15 +23,40 @@ function detectGradingType(topic: string | undefined): "kolokvij" | "kviz" | "ko
   return null;
 }
 
-const SPARKLES = [
-  { top: "12%", left: "8%",  size: 6, delay: "0s",   dur: "3.2s" },
-  { top: "72%", left: "18%", size: 4, delay: "0.6s", dur: "2.7s" },
-  { top: "22%", left: "62%", size: 5, delay: "1.1s", dur: "3.4s" },
-  { top: "58%", left: "44%", size: 3, delay: "1.8s", dur: "2.5s" },
-  { top: "38%", left: "86%", size: 5, delay: "0.3s", dur: "3.0s" },
-  { top: "82%", left: "72%", size: 4, delay: "2.1s", dur: "2.9s" },
-  { top: "50%", left: "22%", size: 3, delay: "2.6s", dur: "3.1s" },
+type SparkleSpec = { top: string; left: string; size: number; delay: string; dur: string; shape: "star" | "burst" | "dot" };
+
+const SPARKLES: SparkleSpec[] = [
+  { top: "8%",  left: "6%",  size: 14, delay: "0s",   dur: "2.4s", shape: "star" },
+  { top: "22%", left: "36%", size: 9,  delay: "0.3s", dur: "2.1s", shape: "burst" },
+  { top: "14%", left: "74%", size: 12, delay: "0.8s", dur: "2.6s", shape: "star" },
+  { top: "46%", left: "14%", size: 8,  delay: "1.2s", dur: "1.9s", shape: "burst" },
+  { top: "38%", left: "58%", size: 6,  delay: "0.5s", dur: "1.7s", shape: "dot" },
+  { top: "50%", left: "88%", size: 11, delay: "1.6s", dur: "2.3s", shape: "star" },
+  { top: "70%", left: "28%", size: 13, delay: "0.1s", dur: "2.5s", shape: "star" },
+  { top: "78%", left: "62%", size: 9,  delay: "1.0s", dur: "2.2s", shape: "burst" },
+  { top: "62%", left: "48%", size: 6,  delay: "1.9s", dur: "1.8s", shape: "dot" },
+  { top: "88%", left: "82%", size: 10, delay: "0.7s", dur: "2.4s", shape: "burst" },
+  { top: "30%", left: "92%", size: 5,  delay: "2.2s", dur: "1.6s", shape: "dot" },
+  { top: "84%", left: "10%", size: 8,  delay: "1.4s", dur: "2.0s", shape: "burst" },
 ];
+
+const STAR_PATH = "M12 0 L14.4 9.6 L24 12 L14.4 14.4 L12 24 L9.6 14.4 L0 12 L9.6 9.6 Z";
+const BURST_PATH = "M12 2 L13 11 L22 12 L13 13 L12 22 L11 13 L2 12 L11 11 Z M12 5 L12 19 M5 12 L19 12";
+
+function SparkleShape({ shape }: { shape: SparkleSpec["shape"] }) {
+  if (shape === "dot") {
+    return <circle cx="12" cy="12" r="5" fill="currentColor" />;
+  }
+  if (shape === "burst") {
+    return (
+      <>
+        <path d={STAR_PATH} fill="currentColor" opacity="0.9" />
+        <path d="M12 2 L12 22 M2 12 L22 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.6" />
+      </>
+    );
+  }
+  return <path d={STAR_PATH} fill="currentColor" />;
+}
 
 function SparkleOverlay({ color }: { color: string }) {
   return (
@@ -39,7 +64,7 @@ function SparkleOverlay({ color }: { color: string }) {
       {SPARKLES.map((s, i) => (
         <svg
           key={i}
-          className="sparkle"
+          className={`sparkle sparkle-${s.shape}`}
           width={s.size}
           height={s.size}
           viewBox="0 0 24 24"
@@ -51,7 +76,7 @@ function SparkleOverlay({ color }: { color: string }) {
             color,
           }}
         >
-          <path d="M12 0 L14 10 L24 12 L14 14 L12 24 L10 14 L0 12 L10 10 Z" fill="currentColor" />
+          <SparkleShape shape={s.shape} />
         </svg>
       ))}
     </div>
