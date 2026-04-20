@@ -148,7 +148,7 @@ export function DayView({
               const topic = getSlotTopic(slot.subject_id, slot.type as "P" | "V", viewingWeek);
               return (
                 <div key={`${dayIdx}-${i}`} className="flex gap-0">
-                  <div className="w-16 shrink-0 pt-3 pr-3 text-right border-r border-border-subtle">
+                  <div className="w-14 shrink-0 pt-3 pr-3 text-right">
                     <div className="text-[12px] font-bold text-foreground tabular-nums leading-none">
                       {slot.start}
                     </div>
@@ -156,7 +156,7 @@ export function DayView({
                       {slot.end}
                     </div>
                   </div>
-                  <div className="flex-1 pl-3 min-w-0">
+                  <div className="flex-1 min-w-0">
                     <SlotCard
                       slot={slot}
                       showProf
