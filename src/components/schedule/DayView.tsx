@@ -1,11 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
 import type { Slot } from "@/data/types";
 import { data, getSlotsForDayIdx, getOverrideNote } from "@/data/schedule";
 import { curriculum } from "@/data/curriculum";
 import { getCurrentWeek, TOTAL_WEEKS } from "@/lib/date-utils";
-import { getSubjectUrgencies } from "@/lib/extraction";
 import { useSwipe } from "@/hooks/useSwipe";
 import { SlotCard } from "./SlotCard";
 import type { TimeStatus } from "./SlotCard";
@@ -64,13 +62,10 @@ export function DayView({
   onSlotClick: (slot: Slot) => void;
   isWeekend?: boolean;
 }) {
-  const dayName = data.days_order[dayIdx];
   const slots = getSlotsForDayIdx(dayIdx, viewingWeek);
   const overrideNote = getOverrideNote(dayIdx, viewingWeek);
   const currentWeek = getCurrentWeek();
   const isCurrentWeek = viewingWeek === currentWeek;
-
-  const urgencies = useMemo(() => getSubjectUrgencies(curriculum), []);
 
   const jsDay = new Date().getDay();
   const todayIdx = jsDay >= 1 && jsDay <= 5 ? jsDay - 1 : -1;
@@ -166,7 +161,6 @@ export function DayView({
                       slot={slot}
                       showProf
                       onClick={() => onSlotClick(slot)}
-                      urgency={urgencies.get(slot.subject_id)}
                       timeStatus={timeStatuses[i]}
                       topic={topic}
                     />

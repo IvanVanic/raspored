@@ -5,7 +5,6 @@ import type { Slot } from "@/data/types";
 import { data, getSlotsForDayIdx } from "@/data/schedule";
 import { curriculum } from "@/data/curriculum";
 import { getCurrentWeek } from "@/lib/date-utils";
-import { getSubjectUrgencies } from "@/lib/extraction";
 import { SlotCard } from "./SlotCard";
 
 function getTodayDayName(): string | null {
@@ -27,8 +26,6 @@ export function DesktopGrid({ viewingWeek, onSlotClick }: { viewingWeek: number;
   const currentWeek = getCurrentWeek();
   const isCurrentWeek = viewingWeek === currentWeek;
   const todayName = isCurrentWeek ? getTodayDayName() : null;
-
-  const urgencies = useMemo(() => getSubjectUrgencies(curriculum), []);
 
   const scheduleGrid = useMemo(() => {
     const grid: Record<string, Record<string, Slot | null>> = {};
@@ -103,7 +100,6 @@ export function DesktopGrid({ viewingWeek, onSlotClick }: { viewingWeek: number;
                         <SlotCard
                           slot={slot}
                           onClick={() => onSlotClick(slot)}
-                          urgency={urgencies.get(slot.subject_id)}
                           topic={getSlotTopic(slot.subject_id, slot.type as "P" | "V", viewingWeek)}
                         />
                       )}

@@ -12,8 +12,11 @@ export const subjectMap = new Map(data.subjects.map((s) => [s.id, s]));
 export function getDateForDayIdx(dayIdx: number, week?: number): string {
   const w = week ?? getCurrentWeek();
   const start = semesterStartLocal();
-  const d = new Date(start.getTime() + ((w - 1) * 7 + dayIdx) * 86_400_000);
-  return d.toISOString().slice(0, 10);
+  const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + (w - 1) * 7 + dayIdx);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 /**

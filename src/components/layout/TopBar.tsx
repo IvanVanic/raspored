@@ -1,7 +1,5 @@
 "use client";
 
-import { data } from "@/data/schedule";
-
 type View = "raspored" | "kalendar";
 
 const MONTH_GENITIVE = [
@@ -43,7 +41,7 @@ export function TopBar({
             {view === "raspored" ? "Raspored" : "Rokovi"}
           </h1>
           <p className="text-[11px] text-muted-fg mt-1 tracking-[0.01em] whitespace-nowrap">
-            {todayString()} · FIDIT 25./26.
+            {todayString()} · FIDIT {year.replaceAll("20", "")}
           </p>
         </div>
 

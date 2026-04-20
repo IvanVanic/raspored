@@ -52,7 +52,7 @@ const KONTROLNA_RE = /\bkontroln[ae]\s+zadać[ae]\b/i;
  * Negative patterns — these mention event keywords but are NOT actual events.
  * e.g. "Ponavljanje i priprema za ispit", "Rješavanje zadataka s prošlih ispita"
  */
-const PREP_RE = /\b(priprema\s+za|prošl|ponavljanje|završni\s+pregled)\b/i;
+const PREP_RE = /\b(priprema\s+za|prošl|ponavljanje|završni\s+pregled|popravni|popravak|nadoknad|konzultacij)\b/i;
 
 function classifyText(text: string): EventType | null {
   // Skip preparation/review weeks — they mention event keywords but aren't events

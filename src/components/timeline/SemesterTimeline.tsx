@@ -5,7 +5,8 @@ import { curriculum } from "@/data/curriculum";
 import { subjectMap } from "@/data/schedule";
 import { extractCriticalDates } from "@/lib/extraction";
 import { semesterStartLocal, TOTAL_WEEKS, formatHrDate, getWeekForDate } from "@/lib/date-utils";
-import { TYPE_LABEL, EVENT_COLOR, TEST_TYPES, getCourseColor, COURSE_COLOR } from "@/lib/labels";
+import { TYPE_LABEL, EVENT_COLOR, TEST_TYPES, getCourseColor } from "@/lib/labels";
+import { daysUntil } from "@/lib/date-utils";
 import type { CurriculumEntry, CriticalDate } from "@/data/types";
 
 const CROATIAN_MONTHS = ["Siječanj", "Veljača", "Ožujak", "Travanj", "Svibanj", "Lipanj",
@@ -31,8 +32,10 @@ function isToday(date: Date): boolean {
 
 function getTeachingWeek(date: Date): number | null {
   const start = semesterStartLocal();
-  const diff = date.getTime() - start.getTime();
-  const week = Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1;
+  const startUTC = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
+  const targetUTC = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const days = Math.floor((targetUTC - startUTC) / 86400000);
+  const week = Math.floor(days / 7) + 1;
   if (week >= 1 && week <= TOTAL_WEEKS) return week;
   return null;
 }
@@ -58,11 +61,22 @@ function monthDays(year: number, month: number): Date[] {
   return days;
 }
 
-/** Returns a stable accent color for a subject, falling back to event-type color. */
+/** Returns the event-type color for consistent legend matching. */
 function resolveEventColor(event: CriticalDate): string {
-  const cc = COURSE_COLOR[event.subjectId];
-  return cc ? cc.accent : EVENT_COLOR[event.type];
+  return EVENT_COLOR[event.type];
 }
+
+const SHORT_EVENT_CODE: Partial<Record<CriticalDate["type"], string>> = {
+  kolokvij: "Kol",
+  ispit: "Isp",
+  obrana: "Obr",
+  kviz: "Kvz",
+  kontrolna: "KZ",
+  predaja: "Pr",
+  laboratorij: "Lab",
+  domaca_zadaca: "DZ",
+  zadavanje: "Zad",
+};
 
 // ─── Day event indicators ─────────────────────────────────────────────────────
 // Each day cell shows colored pill-bars instead of dots.
@@ -74,15 +88,41 @@ interface DayPillsProps {
 }
 
 function DayPills({ events, selected }: DayPillsProps) {
-  const MAX_BARS = 3;
-  const shown = events.slice(0, MAX_BARS);
-  const overflow = events.length - MAX_BARS;
+  const MAX_PILLS = 2;
 
   if (events.length === 0) {
-    // Reserve the bar-row height so all cells align
-    return <div style={{ height: 6 }} />;
+    return <div style={{ height: 12 }} />;
   }
 
+  // 3+ events: show a count badge with most urgent color
+  if (events.length > MAX_PILLS) {
+    const mostUrgent = events.reduce((best, ev) => {
+      const rank = { critical: 2, approaching: 1, ambient: 0 };
+      return rank[ev.urgency] > rank[best.urgency] ? ev : best;
+    }, events[0]);
+    const color = resolveEventColor(mostUrgent);
+
+    return (
+      <div style={{ display: "flex", justifyContent: "center", height: 12 }}>
+        <span
+          style={{
+            fontSize: 8,
+            fontWeight: 800,
+            color,
+            background: `color-mix(in srgb, ${color} 15%, transparent)`,
+            borderRadius: 4,
+            padding: "1px 5px",
+            lineHeight: "12px",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          {events.length}
+        </span>
+      </div>
+    );
+  }
+
+  // 1-2 events: individual labeled pills
   return (
     <div
       style={{
@@ -91,37 +131,36 @@ function DayPills({ events, selected }: DayPillsProps) {
         width: "100%",
         alignItems: "center",
         justifyContent: "center",
-        height: 6,
+        height: 12,
       }}
     >
-      {shown.map((ev, i) => (
-        <span
-          key={i}
-          style={{
-            flex: 1,
-            height: 6,
-            minWidth: 0,
-            borderRadius: 3,
-            background: resolveEventColor(ev),
-            opacity: selected ? 1 : 0.85,
-            boxShadow: selected ? `0 0 6px ${resolveEventColor(ev)}88` : undefined,
-          }}
-        />
-      ))}
-      {overflow > 0 && (
-        <span
-          style={{
-            fontSize: 7,
-            fontWeight: 800,
-            color: "var(--muted-fg)",
-            lineHeight: 1,
-            letterSpacing: "-0.03em",
-            flexShrink: 0,
-          }}
-        >
-          +{overflow}
-        </span>
-      )}
+      {events.map((ev, i) => {
+        const color = resolveEventColor(ev);
+        const code = SHORT_EVENT_CODE[ev.type] ?? ev.type.slice(0, 3);
+        return (
+          <span
+            key={i}
+            style={{
+              flex: 1,
+              height: 12,
+              minWidth: 0,
+              borderRadius: 4,
+              background: `color-mix(in srgb, ${color} 20%, transparent)`,
+              color,
+              fontSize: 7,
+              fontWeight: 800,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              letterSpacing: "-0.01em",
+              lineHeight: 1,
+              opacity: selected ? 1 : 0.9,
+            }}
+          >
+            {code}
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -210,7 +249,7 @@ function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGri
                 paddingBottom: 5,
                 background: cellBg,
                 opacity: isWeekend && !hasEvents ? 0.38 : 1,
-                minHeight: 44, // comfortable tap target
+                minHeight: 52, // comfortable tap target
                 WebkitTapHighlightColor: "transparent",
               }}
             >
@@ -378,6 +417,8 @@ function EventDetailPanel({ selectedDate, events, currentWeek, onClose, onTestTa
               const cc = getCourseColor(event.subjectId);
               const isTest = TEST_TYPES.has(event.type);
               const barColor = resolveEventColor(event);
+              const days = event.date ? daysUntil(event.date) : null;
+              const countdownLabel = days === null ? null : days === 0 ? "danas" : days === 1 ? "sutra" : days > 0 ? `za ${days}d` : "prošlo";
 
               return (
                 <button
@@ -397,14 +438,14 @@ function EventDetailPanel({ selectedDate, events, currentWeek, onClose, onTestTa
                     width: "100%",
                   }}
                 >
-                  {/* Colored left stripe — the visual accent bar */}
+                  {/* Colored left stripe — course accent */}
                   <span
                     style={{
                       width: 3,
                       minWidth: 3,
                       alignSelf: "stretch",
                       borderRadius: 2,
-                      background: barColor,
+                      background: cc.accent,
                       flexShrink: 0,
                     }}
                   />
@@ -462,8 +503,8 @@ function EventDetailPanel({ selectedDate, events, currentWeek, onClose, onTestTa
                     )}
                   </div>
 
-                  {/* Tap-to-detail affordance — only for test types */}
-                  {isTest && onTestTap && (
+                  {/* Countdown badge or tap-to-detail */}
+                  {isTest && onTestTap ? (
                     <span
                       style={{
                         fontSize: 10,
@@ -481,7 +522,20 @@ function EventDetailPanel({ selectedDate, events, currentWeek, onClose, onTestTa
                     >
                       Otvori
                     </span>
-                  )}
+                  ) : countdownLabel && days !== null && days >= 0 ? (
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 600,
+                        color: days <= 3 ? "var(--u-critical)" : "var(--muted-fg)",
+                        flexShrink: 0,
+                        lineHeight: 1,
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {countdownLabel}
+                    </span>
+                  ) : null}
                 </button>
               );
             })}
@@ -506,27 +560,35 @@ function CalendarLegend() {
         borderTop: "1px solid var(--border-subtle)",
       }}
     >
-      {/* Event type legend — pill bars to match the calendar cells */}
+      {/* Event type legend — labeled pills to match the calendar cells */}
       {([
-        ["kolokvij", "Kolokvij"] as const,
-        ["ispit", "Ispit"] as const,
-        ["obrana", "Obrana"] as const,
-        ["kontrolna", "Ostalo"] as const,
-      ]).map(([type, label]) => (
+        ["kolokvij", "Kolokvij", "Kol"] as const,
+        ["ispit", "Ispit", "Isp"] as const,
+        ["obrana", "Obrana", "Obr"] as const,
+        ["kviz", "Kviz", "Kvz"] as const,
+        ["kontrolna", "Kontrolna", "KZ"] as const,
+      ]).map(([type, label, code]) => (
         <div
           key={type}
           style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--muted-fg)" }}
         >
           <span
             style={{
-              display: "inline-block",
-              width: 18,
-              height: 6,
-              borderRadius: 3,
-              background: EVENT_COLOR[type],
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 24,
+              height: 12,
+              borderRadius: 4,
+              background: `color-mix(in srgb, ${EVENT_COLOR[type]} 20%, transparent)`,
+              color: EVENT_COLOR[type],
+              fontSize: 7,
+              fontWeight: 800,
               flexShrink: 0,
             }}
-          />
+          >
+            {code}
+          </span>
           <span style={{ fontWeight: 500 }}>{label}</span>
         </div>
       ))}

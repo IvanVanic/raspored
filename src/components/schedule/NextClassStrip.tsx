@@ -75,7 +75,7 @@ export function NextClassStrip({
           onTap?.(slot);
         }
       }}
-      aria-label={`Sljedeća nastava: ${shortName}, ${slot.type}, ${timeLabel}`}
+      aria-label={`Sljedeća nastava: ${shortName}, ${slot.type}${slot.online ? ", online" : ""}, ${timeLabel}`}
     >
       {/* Left accent bar — same language as slot cards */}
       <span
@@ -99,12 +99,17 @@ export function NextClassStrip({
         </span>
         <span className="next-class-meta">
           <span>{slot.start} – {slot.end}</span>
-          {slot.room && (
+          {slot.online ? (
+            <>
+              <span className="meta-sep" aria-hidden="true" />
+              <span style={{ color: "var(--u-approaching)", fontWeight: 600 }}>Online</span>
+            </>
+          ) : slot.room ? (
             <>
               <span className="meta-sep" aria-hidden="true" />
               <span>{slot.room}</span>
             </>
-          )}
+          ) : null}
         </span>
       </span>
 

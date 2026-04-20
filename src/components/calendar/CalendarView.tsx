@@ -4,16 +4,28 @@ import { useMemo, useState } from "react";
 import { curriculum } from "@/data/curriculum";
 import { subjectMap, data } from "@/data/schedule";
 import { extractCriticalDates } from "@/lib/extraction";
-import { formatHrDate, daysUntil } from "@/lib/date-utils";
-import { TYPE_LABEL, TYPE_CATEGORY, EVENT_COLOR, TEST_TYPES, getCourseColor } from "@/lib/labels";
+import { daysUntil } from "@/lib/date-utils";
+import { TYPE_LABEL, TEST_TYPES, getCourseColor } from "@/lib/labels";
 import type { CurriculumEntry, CriticalDate, EventType } from "@/data/types";
 import { Dropdown } from "@/components/shared/Dropdown";
 
-function daysLabel(days: number): string {
-  if (days === 0) return "danas";
-  if (days === 1) return "sutra";
-  if (days < 0) return "prošlo";
-  return `za ${days}d`;
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+const CROATIAN_DAYS = ["nedjelja", "ponedjeljak", "utorak", "srijeda", "četvrtak", "petak", "subota"];
+const CROATIAN_MONTHS_GEN = [
+  "siječnja", "veljače", "ožujka", "travnja", "svibnja", "lipnja",
+  "srpnja", "kolovoza", "rujna", "listopada", "studenog", "prosinca",
+];
+
+function formatAgendaDate(date: Date): string {
+  const dayName = CROATIAN_DAYS[date.getDay()];
+  const day = date.getDate();
+  const month = CROATIAN_MONTHS_GEN[date.getMonth()];
+  return `${dayName}, ${day}. ${month}`;
+}
+
+function toDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 type CourseFilter = string | null;
@@ -28,6 +40,24 @@ const TYPE_FILTERS: { label: string; value: EventType | "ostalo" | null }[] = [
   { label: "Obrane", value: "obrana" },
   { label: "Ostalo", value: "ostalo" },
 ];
+
+// ── Grading points lookup ────────────────────────────────────────────────────
+
+function getEventPoints(event: CriticalDate): number | null {
+  const entry = curriculum[event.subjectId.toUpperCase()] as CurriculumEntry | undefined;
+  if (!entry) return null;
+  for (const g of entry.grading) {
+    const gLabel = g.component.toLowerCase();
+    const eLabel = TYPE_LABEL[event.type]?.toLowerCase() ?? "";
+    if (gLabel.includes(eLabel) || eLabel.includes(gLabel)) return g.maxPoints;
+    // Match numbered kolokvij: "1. kolokvij" in label vs "1. kolokvij" in grading
+    if (event.type === "kolokvij" && gLabel.includes("kolokvij")) return g.maxPoints;
+    if (event.type === "obrana" && gLabel.includes("projekt")) return g.maxPoints;
+  }
+  return null;
+}
+
+// ── Main Component ───────────────────────────────────────────────────────────
 
 export function CalendarView({ onTestTap }: { onTestTap?: (event: CriticalDate) => void }) {
   const [courseFilter, setCourseFilter] = useState<CourseFilter>(null);
@@ -44,6 +74,7 @@ export function CalendarView({ onTestTap }: { onTestTap?: (event: CriticalDate) 
     []
   );
 
+  // Separate ispiti unless explicitly filtering for them
   const includeIspiti = typeFilter === "ispit";
   const nonIspit = includeIspiti ? all : all.filter(d => d.type !== "ispit");
   const ispiti = includeIspiti ? [] : all.filter(d => d.type === "ispit");
@@ -55,15 +86,54 @@ export function CalendarView({ onTestTap }: { onTestTap?: (event: CriticalDate) 
     return true;
   });
 
-  const upcoming = filtered.filter(d => !d.date || daysUntil(d.date) >= 0);
+  // Split into dated upcoming, past, and undated
+  const upcoming = filtered.filter(d => d.date && daysUntil(d.date) >= 0);
   const past = filtered.filter(d => d.date && daysUntil(d.date) < 0);
+  const undated = filtered.filter(d => !d.date);
 
-  const thisWeek = upcoming.filter(d => d.date && daysUntil(d.date) <= 7);
-  const soon = upcoming.filter(d => !d.date || (d.date && daysUntil(d.date) > 7 && daysUntil(d.date) <= 21));
-  const later = upcoming.filter(d => d.date && daysUntil(d.date) > 21);
-  const undated = upcoming.filter(d => !d.date);
+  // Group upcoming by date for agenda view
+  const dateGroups = useMemo(() => {
+    const groups: { date: Date; key: string; events: CriticalDate[] }[] = [];
+    const map = new Map<string, { date: Date; events: CriticalDate[] }>();
 
-  const hasSections = thisWeek.length > 0 || soon.length > 0 || later.length > 0 || undated.length > 0;
+    for (const ev of upcoming) {
+      if (!ev.date) continue;
+      const key = toDateKey(ev.date);
+      if (!map.has(key)) {
+        map.set(key, { date: ev.date, events: [] });
+      }
+      map.get(key)!.events.push(ev);
+    }
+
+    for (const [key, val] of map) {
+      groups.push({ date: val.date, key, events: val.events });
+    }
+
+    groups.sort((a, b) => a.date.getTime() - b.date.getTime());
+    return groups;
+  }, [upcoming]);
+
+  // Group past by date (reversed — most recent first)
+  const pastGroups = useMemo(() => {
+    const groups: { date: Date; key: string; events: CriticalDate[] }[] = [];
+    const map = new Map<string, { date: Date; events: CriticalDate[] }>();
+
+    for (const ev of past) {
+      if (!ev.date) continue;
+      const key = toDateKey(ev.date);
+      if (!map.has(key)) {
+        map.set(key, { date: ev.date, events: [] });
+      }
+      map.get(key)!.events.push(ev);
+    }
+
+    for (const [key, val] of map) {
+      groups.push({ date: val.date, key, events: val.events });
+    }
+
+    groups.sort((a, b) => b.date.getTime() - a.date.getTime());
+    return groups;
+  }, [past]);
 
   return (
     <div className="pb-6">
@@ -91,75 +161,148 @@ export function CalendarView({ onTestTap }: { onTestTap?: (event: CriticalDate) 
         </div>
       </div>
 
-      <div className="px-4 pt-4 space-y-5">
-        {thisWeek.length > 0 && (
-          <Section title="Ovaj tjedan" events={thisWeek} urgency="critical" onTestTap={onTestTap} />
-        )}
-        {soon.length > 0 && (
-          <Section title="Uskoro" events={soon} urgency="approaching" onTestTap={onTestTap} />
-        )}
-        {later.length > 0 && (
-          <Section title="Kasnije" events={later} onTestTap={onTestTap} />
-        )}
-        {undated.length > 0 && (
-          <Section title="Bez datuma" events={undated} onTestTap={onTestTap} />
+      <div className="px-4 pt-4">
+        {/* Agenda — upcoming events grouped by date */}
+        {dateGroups.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            {dateGroups.map(({ date, key, events }) => {
+              const days = daysUntil(date);
+              return (
+                <div key={key} style={{ animation: "row-in 200ms var(--ease-out-expo) both" }}>
+                  <DateDivider date={date} days={days} />
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 16 }}>
+                    {events.map((event, i) => (
+                      <AgendaRow key={i} event={event} onTestTap={onTestTap} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
 
-        {/* Ispiti — always at bottom */}
-        {ispiti.length > 0 && (
-          <div>
-            {hasSections && (
-              <div style={{ height: 1, background: "var(--border-subtle)", marginBottom: 16 }} />
-            )}
-            <div className="flex items-center gap-2 mb-2.5">
-              <span className="inline-block w-[3px] h-3.5 rounded-full shrink-0" style={{ background: "var(--e-accent)" }} />
-              <h3 className="text-[10px] font-semibold uppercase tracking-[0.07em] text-muted-fg">
-                Ispitni rokovi
-              </h3>
-              <span className="text-[10px] font-semibold tabular-nums text-muted-fg opacity-60">
-                {ispiti.filter(d => !courseFilter || d.subjectId === courseFilter).filter(d => !d.date || daysUntil(d.date) >= 0).length}
+        {/* Undated events */}
+        {undated.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 0",
+                marginBottom: 4,
+              }}
+            >
+              <span style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: "var(--muted-fg)",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}>
+                Bez datuma
               </span>
             </div>
-            <div className="space-y-1">
-              {ispiti
-                .filter(d => !d.date || daysUntil(d.date) >= 0)
-                .filter(d => !courseFilter || d.subjectId === courseFilter)
-                .map((event, i) => (
-                  <EventRow key={`isp-${i}`} event={event} compact onTestTap={onTestTap} />
-                ))}
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {undated.map((event, i) => (
+                <AgendaRow key={i} event={event} onTestTap={onTestTap} showWeek />
+              ))}
             </div>
-            {ispiti.filter(d => d.date && daysUntil(d.date) < 0).filter(d => !courseFilter || d.subjectId === courseFilter).length > 0 && (
-              <div className="mt-1 space-y-1 opacity-35">
-                {ispiti
-                  .filter(d => d.date && daysUntil(d.date) < 0)
-                  .filter(d => !courseFilter || d.subjectId === courseFilter)
-                  .map((event, i) => (
-                    <EventRow key={`isp-p-${i}`} event={event} compact onTestTap={onTestTap} />
+          </div>
+        )}
+
+        {/* Ispiti section — always at bottom unless filtered */}
+        {ispiti.length > 0 && (
+          <div style={{ marginTop: 8 }}>
+            <div style={{ height: 1, background: "var(--border-subtle)", marginBottom: 16 }} />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "4px 0",
+                marginBottom: 8,
+              }}
+            >
+              <span
+                style={{
+                  width: 3,
+                  height: 14,
+                  borderRadius: 2,
+                  background: "var(--e-accent)",
+                  flexShrink: 0,
+                }}
+              />
+              <span style={{
+                fontSize: 10,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.07em",
+                color: "var(--muted-fg)",
+              }}>
+                Ispitni rokovi
+              </span>
+            </div>
+            {(() => {
+              const visible = ispiti
+                .filter(d => !courseFilter || d.subjectId === courseFilter)
+                .filter(d => d.date && daysUntil(d.date) >= 0);
+              const byDate = new Map<string, { date: Date; events: CriticalDate[] }>();
+              for (const ev of visible) {
+                if (!ev.date) continue;
+                const key = toDateKey(ev.date);
+                if (!byDate.has(key)) byDate.set(key, { date: ev.date, events: [] });
+                byDate.get(key)!.events.push(ev);
+              }
+              const groups = Array.from(byDate.entries())
+                .map(([key, v]) => ({ key, ...v }))
+                .sort((a, b) => a.date.getTime() - b.date.getTime());
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {groups.map(({ key, date, events }) => (
+                    <div key={key}>
+                      <DateDivider date={date} days={daysUntil(date)} />
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 4 }}>
+                        {events.map((event, i) => (
+                          <AgendaRow key={i} event={event} onTestTap={onTestTap} />
+                        ))}
+                      </div>
+                    </div>
                   ))}
-              </div>
-            )}
+                </div>
+              );
+            })()}
           </div>
         )}
 
         {/* Past toggle */}
         {past.length > 0 && (
-          <div>
+          <div style={{ marginTop: 16 }}>
             <button
               className="text-[11px] text-muted-fg hover:text-foreground t-fast transition-colors flex items-center gap-1.5"
               onClick={() => setShowPast(!showPast)}
             >
               <span style={{ fontSize: 9 }}>{showPast ? "▲" : "▼"}</span>
-              {showPast ? "Sakrij prošlo" : `Prošlo (${past.length})`}
+              {showPast ? "Sakrij prošlo" : `Prikaži prošlo (${past.length})`}
             </button>
             {showPast && (
-              <div className="mt-2 space-y-1 opacity-40">
-                {past.map((event, i) => <EventRow key={`p-${i}`} event={event} onTestTap={onTestTap} />)}
+              <div style={{ marginTop: 8 }}>
+                {pastGroups.map(({ date, key, events }) => (
+                  <div key={key} style={{ opacity: 0.45 }}>
+                    <DateDivider date={date} days={daysUntil(date)} />
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 }}>
+                      {events.map((event, i) => (
+                        <AgendaRow key={i} event={event} onTestTap={onTestTap} past />
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         )}
 
-        {upcoming.length === 0 && undated.length === 0 && (
+        {dateGroups.length === 0 && undated.length === 0 && (
           <div className="null-state">
             <p>Nema nadolazećih rokova{courseFilter || typeFilter ? " za odabrane filtre" : ""}.</p>
           </div>
@@ -169,132 +312,172 @@ export function CalendarView({ onTestTap }: { onTestTap?: (event: CriticalDate) 
   );
 }
 
-function Section({
-  title,
-  events,
-  urgency,
-  onTestTap,
-}: {
-  title: string;
-  events: CriticalDate[];
-  urgency?: "critical" | "approaching";
-  onTestTap?: (event: CriticalDate) => void;
-}) {
-  const accentColor = urgency === "critical"
-    ? "var(--u-critical)"
-    : urgency === "approaching"
-    ? "var(--u-approaching)"
-    : undefined;
+// ── Date Divider ─────────────────────────────────────────────────────────────
 
-  return (
-    <div>
-      <div className="flex items-center gap-2 mb-2.5">
-        {accentColor && (
-          <span
-            className="inline-block w-[3px] h-3.5 rounded-full shrink-0"
-            style={{ background: accentColor }}
-          />
-        )}
-        <h3
-          className="text-[10px] font-semibold uppercase tracking-[0.07em]"
-          style={{ color: accentColor ?? "var(--muted-fg)" }}
-        >
-          {title}
-        </h3>
-        <span
-          className="text-[10px] font-semibold tabular-nums"
-          style={{ color: accentColor ?? "var(--muted-fg)", opacity: 0.6 }}
-        >
-          {events.length}
-        </span>
-      </div>
-      <div className="space-y-1">
-        {events.map((event, i) => (
-          <EventRow key={i} event={event} onTestTap={onTestTap} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function EventRow({ event, compact, onTestTap }: { event: CriticalDate; compact?: boolean; onTestTap?: (event: CriticalDate) => void }) {
-  const isTest = TEST_TYPES.has(event.type);
-  const subj = subjectMap.get(event.subjectId);
-  const cc = getCourseColor(event.subjectId);
-  const days = event.date ? daysUntil(event.date) : null;
-  const isSoon = days !== null && days >= 0 && days <= 7;
+function DateDivider({ date, days }: { date: Date; days: number }) {
   const isToday = days === 0;
   const isTomorrow = days === 1;
+  const isSoon = days >= 0 && days <= 7;
 
-  const countdownColor = isToday
+  const label = isToday ? "Danas" : isTomorrow ? "Sutra" : formatAgendaDate(date);
+  const accentColor = isToday
     ? "var(--u-critical)"
     : isSoon
     ? "var(--u-approaching)"
     : "var(--muted-fg)";
 
-  const countdownBg = isToday
-    ? "color-mix(in srgb, var(--u-critical) 15%, transparent)"
-    : isTomorrow
-    ? "color-mix(in srgb, var(--u-approaching) 15%, transparent)"
-    : isSoon
-    ? "color-mix(in srgb, var(--u-approaching) 10%, transparent)"
-    : "var(--muted)";
-
   return (
     <div
-      className="event-row"
-      onClick={() => isTest && onTestTap?.(event)}
       style={{
-        paddingLeft: 9,
-        borderLeft: `3px solid ${EVENT_COLOR[event.type]}`,
-        cursor: isTest && onTestTap ? "pointer" : undefined,
-        background: isSoon
-          ? "color-mix(in srgb, var(--u-critical-tint) 90%, transparent)"
-          : "var(--muted)",
-        animation: "row-in 200ms var(--ease-out-expo) both",
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "8px 0 6px",
       }}
     >
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-[12px] font-semibold text-foreground leading-tight shrink-0">
-            {TYPE_LABEL[event.type]}
-          </span>
-          <span className="text-[11px] font-medium leading-tight truncate" style={{ color: cc.text, opacity: 0.8 }}>
-            {subj?.short_name ?? event.subjectId}
-          </span>
-          {event.date && (
-            <span
-              className="text-[11px] tabular-nums leading-tight shrink-0 ml-auto pl-2"
-              style={{ color: isSoon ? "var(--u-approaching)" : "var(--muted-fg)" }}
-            >
-              {formatHrDate(event.date)}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Countdown badge — more prominent */}
-      {days !== null && days >= 0 && (
+      <span
+        style={{
+          fontSize: 12,
+          fontWeight: 700,
+          color: isToday || isTomorrow ? accentColor : "var(--foreground)",
+          letterSpacing: "-0.01em",
+        }}
+      >
+        {label}
+      </span>
+      {days > 1 && (
         <span
-          className="event-countdown"
           style={{
-            color: countdownColor,
-            background: countdownBg,
-            flexShrink: 0,
-            fontWeight: isSoon ? 800 : 700,
-            border: isSoon ? `1px solid ${countdownColor}33` : undefined,
-            minWidth: 44,
-            textAlign: "center",
+            fontSize: 10,
+            fontWeight: 600,
+            color: accentColor,
+            opacity: 0.7,
+            fontVariantNumeric: "tabular-nums",
           }}
         >
-          {daysLabel(days)}
+          za {days}d
         </span>
       )}
-      {!event.date && (
-        <span className="event-countdown" style={{ color: "var(--muted-fg)", background: "var(--muted)", flexShrink: 0, minWidth: 36, textAlign: "center" }}>
+      <span
+        style={{
+          flex: 1,
+          height: 1,
+          background: isToday
+            ? "color-mix(in srgb, var(--u-critical) 25%, transparent)"
+            : "var(--border-subtle)",
+        }}
+      />
+    </div>
+  );
+}
+
+// ── Agenda Row ───────────────────────────────────────────────────────────────
+
+function AgendaRow({
+  event,
+  onTestTap,
+  past,
+  showWeek,
+}: {
+  event: CriticalDate;
+  onTestTap?: (event: CriticalDate) => void;
+  past?: boolean;
+  showWeek?: boolean;
+}) {
+  const isTest = TEST_TYPES.has(event.type);
+  const subj = subjectMap.get(event.subjectId);
+  const cc = getCourseColor(event.subjectId);
+  const points = getEventPoints(event);
+
+  return (
+    <button
+      onClick={() => isTest && onTestTap?.(event)}
+      disabled={!isTest || !onTestTap}
+      style={{
+        all: "unset",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "8px 10px",
+        borderRadius: 8,
+        background: "var(--muted)",
+        cursor: isTest && onTestTap ? "pointer" : "default",
+        boxSizing: "border-box",
+        width: "100%",
+        borderLeft: `3px solid ${cc.accent}`,
+        opacity: past ? 0.5 : 1,
+      }}
+    >
+      {/* Course name — colored */}
+      <span
+        style={{
+          fontSize: 12,
+          fontWeight: 700,
+          color: cc.text,
+          minWidth: 44,
+          flexShrink: 0,
+        }}
+      >
+        {subj?.short_name ?? event.subjectId}
+      </span>
+
+      {/* Event type + label */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <span
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: "var(--foreground)",
+            lineHeight: 1.3,
+          }}
+        >
+          {TYPE_LABEL[event.type]}
+        </span>
+      </div>
+
+      {/* Points badge */}
+      {points && (
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            color: "var(--muted-fg)",
+            flexShrink: 0,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {points} pts
+        </span>
+      )}
+
+      {/* Week badge for undated */}
+      {showWeek && !event.date && (
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            color: "var(--muted-fg)",
+            flexShrink: 0,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
           T{event.week}
         </span>
       )}
-    </div>
+
+      {/* Tap affordance for tests */}
+      {isTest && onTestTap && !past && (
+        <span
+          style={{
+            fontSize: 14,
+            color: "var(--muted-fg)",
+            flexShrink: 0,
+            opacity: 0.5,
+          }}
+        >
+          ›
+        </span>
+      )}
+    </button>
   );
 }

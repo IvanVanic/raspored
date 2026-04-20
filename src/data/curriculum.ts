@@ -1,4 +1,4 @@
-import type { CurriculumEntry, WeekTopic, GradingInfo } from "./types";
+import type { CurriculumEntry, WeekTopic } from "./types";
 
 function makeWeeks(
   raw: Array<{ lecture: string; exercise: string }>
@@ -33,7 +33,7 @@ export const curriculum: Record<string, CurriculumEntry> = {
       { component: "Seminar", maxPoints: 10 },
       { component: "Ispit", maxPoints: 30 },
     ],
-    exams: ["22.06.2026.", "06.07.2026.", "07.09.2026."],
+    exams: ["23.06.2026.", "07.07.2026.", "27.08.2026.", "10.09.2026."],
   },
 
   // ─── UASP ────────────────────────────────────────────────────────────
@@ -62,28 +62,28 @@ export const curriculum: Record<string, CurriculumEntry> = {
       { component: "Laboratorijske vje\u017ebe", maxPoints: 20 },
       { component: "Ispit", maxPoints: 40 },
     ],
-    exams: ["18.06.2026.", "02.07.2026.", "10.09.2026."],
+    exams: ["18.06.2026.", "02.07.2026.", "01.09.2026.", "08.09.2026."],
   },
 
   // ─── OS ───────────────────────────────────────────────────────────────
   OS: {
     subjectId: "OS",
     weeks: makeWeeks([
-      { lecture: "Uvod u operacijske sustave", exercise: "Uvod u Linux. Osnove ljuske. Naredbe za rad s datote\u010dnim sustavom" },
-      { lecture: "Struktura operacijskog sustava", exercise: "Naredbe za rad s tekstualnim datotekama" },
-      { lecture: "Procesi \u2013 upravljanje i komunikacija", exercise: "Korisnici i grupe. Dozvole. Preusmjeravanje i cjevovodi" },
-      { lecture: "Procesi \u2013 raspoređivanje", exercise: "Varijable ljuske. Programiranje u ljusci: osnove" },
-      { lecture: "Dretve", exercise: "Programiranje u ljusci: funkcije i kontrola toka" },
-      { lecture: "Uskrsni praznici", exercise: "Uskrsni praznici" },
-      { lecture: "Potpuni zastoj", exercise: "Kolokvij (20.04.2026.)" },
-      { lecture: "Upravljanje memorijom", exercise: "Regularne ekspresije, grep, sed, awk" },
-      { lecture: "Virtualna memorija", exercise: "Kontrolna zada\u0107a 1 (29.04.2026.)" },
-      { lecture: "Upravljanje sekundarnom memorijom", exercise: "Procesi i dretve u Linuxu" },
-      { lecture: "Datote\u010dni sustav", exercise: "Programiranje u C-u: procesi i signali" },
-      { lecture: "Ulazno-izlazni sustav", exercise: "Programiranje u C-u: dretve i sinkronizacija" },
-      { lecture: "Za\u0161tita i sigurnost", exercise: "Kontrolna zada\u0107a 2 (03.06.2026.)" },
-      { lecture: "Ponavljanje i priprema za ispit", exercise: "Popravna kontrolna zada\u0107a (10.06.2026.)" },
-      { lecture: "Zavr\u0161ni pregled", exercise: "Zavr\u0161ni pregled" },
+      { lecture: "Uvodno predavanje", exercise: "Uvod u rad sa su\u010deljem naredbenog retka. Rad s direktorijima" },
+      { lecture: "Razvoj OS, osnovni zadaci OS, struktura OS", exercise: "Osnovni rad s datotekama i ure\u0111iva\u010di tekstualnih datoteka" },
+      { lecture: "Interakcija OS i strojne opreme, upravljanje procesima", exercise: "Napredni rad s datotekama: globalni izrazi i arhiviranje sadr\u017eaja" },
+      { lecture: "Konkurentnost procesa, sinkronizacija (1)", exercise: "Regularni izrazi. Usporedba sadr\u017eaja datoteka" },
+      { lecture: "Konkurentnost procesa, sinkronizacija (2)", exercise: "Preusmjeravanje ulaza i izlaza: cijevi i filteri" },
+      { lecture: "Zastoji", exercise: "Rad s ljuskom. Varijable ljuske i okoline" },
+      { lecture: "Upravljanje procesorom", exercise: "Upravljanje poslovima. Nadgledanje procesa" },
+      { lecture: "Kolokvij (20.04.2026.)", exercise: "Upravljanje procesima: signali i prioritet procesa/posla" },
+      { lecture: "Upravljanje memorijom: strani\u010denje (1)", exercise: "Kontrolna zada\u0107a 1 (29.04.2026.)" },
+      { lecture: "Upravljanje memorijom: strani\u010denje (2)", exercise: "Python modul OS: osnovne usluge operacijskog sustava" },
+      { lecture: "Upravljanje memorijom: segmentacija", exercise: "Python moduli OS i Signal: komunikacija me\u0111u procesima" },
+      { lecture: "Upravljanje memorijom: strategije smje\u0161taja, za\u0161tita memorije", exercise: "Python modul Threading: vi\u0161edretvenost" },
+      { lecture: "Dodjeljivanje resursa, upravljanje podacima", exercise: "Python modul Threading: uskla\u0111ivanje izvođenja procesa i dretvi" },
+      { lecture: "Upravljanje U/I ure\u0111ajima: driver, controller, obrada prekida", exercise: "Kontrolna zada\u0107a 2 (03.06.2026.)" },
+      { lecture: "Uloga sigurnosti i za\u0161tite u OS", exercise: "Popravna kontrolna zada\u0107a (10.06.2026.)" },
     ]),
     grading: [
       { component: "Kolokvij", maxPoints: 30, note: "20.04.2026." },
@@ -91,7 +91,7 @@ export const curriculum: Record<string, CurriculumEntry> = {
       { component: "Kontrolna zada\u0107a 2", maxPoints: 10, note: "03.06.2026." },
       { component: "Ispit", maxPoints: 50 },
     ],
-    exams: ["17.06.2026.", "01.07.2026.", "09.09.2026."],
+    exams: ["16.06.2026.", "30.06.2026.", "25.08.2026.", "10.09.2026."],
   },
 
   // ─── MODPOD ──────────────────────────────────────────────────────────
@@ -120,36 +120,37 @@ export const curriculum: Record<string, CurriculumEntry> = {
       { component: "Zadaci tijekom nastave", maxPoints: 15 },
       { component: "Ispit (projektni zadatak)", maxPoints: 40 },
     ],
-    exams: ["19.06.2026.", "03.07.2026.", "11.09.2026."],
+    exams: ["25.06.2026.", "09.07.2026.", "26.08.2026.", "09.09.2026."],
   },
 
   // ─── AOR ──────────────────────────────────────────────────────────────
   AOR: {
     subjectId: "AOR",
     weeks: makeWeeks([
-      { lecture: "Uvod u kolegij. Pregled razvoja ra\u010dunala", exercise: "Pregled ku\u0107i\u0161ta i komponenti osobnog ra\u010dunala" },
-      { lecture: "Prikazivanje podataka u ra\u010dunalu. Brojevni sustavi", exercise: "Rad s brojevnim sustavima. Pretvaranje iz sustava u sustav" },
-      { lecture: "Logi\u010dki sklopovi. Kombinacijski i sekvencijski sklopovi", exercise: "Rad s logi\u010dkim sklopovima" },
-      { lecture: "Gra\u0111a i princip rada procesora", exercise: "1. doma\u0107a zada\u0107a (23.03.2026.)" },
-      { lecture: "Skup instrukcija i na\u010dini adresiranja", exercise: "Rad sa skupom instrukcija i na\u010dinima adresiranja" },
-      { lecture: "Uskrsni praznici", exercise: "Uskrsni praznici" },
-      { lecture: "Proto\u010dna struktura i paralelizam na razini instrukcija", exercise: "Kolokvij (20.04.2026.)" },
-      { lecture: "Aritmeti\u010dko-logi\u010dka jedinica", exercise: "2. doma\u0107a zada\u0107a (22.04.2026.)" },
-      { lecture: "Memorijski sustav i piru\u010dna memorija", exercise: "Kviz (29.04.2026.)" },
-      { lecture: "Glavna memorija, Virtualna memorija", exercise: "3. doma\u0107a zada\u0107a (06.05.2026.)" },
-      { lecture: "Sabirni\u010dki sustav", exercise: "Rad sa sabirni\u010dkim sustavima" },
-      { lecture: "Ulazno-izlazni sustav", exercise: "4. doma\u0107a zada\u0107a (20.05.2026.)" },
-      { lecture: "Vi\u0161eprocesorski sustavi", exercise: "Popravak kolokvija" },
-      { lecture: "Trendovi i budu\u0107nost ra\u010dunalne arhitekture", exercise: "5. doma\u0107a zada\u0107a (03.06.2026.)" },
-      { lecture: "Ponavljanje i priprema za ispit", exercise: "6. doma\u0107a zada\u0107a (10.06.2026.)" },
+      { lecture: "Uvod / Kodiranje informacija u digitalnim sustavima", exercise: "Uvod u vje\u017ebe / Kodiranje informacija u digitalnim sustavima" },
+      { lecture: "Booleova algebra", exercise: "Booleova algebra" },
+      { lecture: "Logi\u010dke funkcije / Kombinacijski logi\u010dki sklopovi", exercise: "Prikaz logi\u010dkih funkcija. 1. doma\u0107a zada\u0107a (20.03.2026.)" },
+      { lecture: "Slijedni logi\u010dki sklopovi", exercise: "Slijedni logi\u010dki sklopovi" },
+      { lecture: "Arhitektura jednostavnog procesora. CISC i RISC procesori", exercise: "Arhitektura jednostavnog procesora. 2. doma\u0107a zada\u0107a (03.04.2026.)" },
+      { lecture: "Zbirni jezik", exercise: "Provjera znanja — test (10.04.2026.)" },
+      { lecture: "Na\u010dini adresiranja MIPS procesora", exercise: "MIPS \u2014 skup instrukcija. 3. doma\u0107a zada\u0107a (17.04.2026.)" },
+      { lecture: "Upravlja\u010dki sklop procesora", exercise: "Izvr\u0161avanje instrukcija mikroprocesora MIPS" },
+      { lecture: "Aritmeti\u010dko-logi\u010dka jedinica", exercise: "Primjeri programa za MIPS: grananje i petlje. 4. doma\u0107a zada\u0107a (01.05.2026.)" },
+      { lecture: "Proto\u010dna arhitektura procesora MIPS", exercise: "Primjeri programa za MIPS: jednostavni pozivi funkcija" },
+      { lecture: "Memorijska hijerarhija ra\u010dunala", exercise: "Kolokvij (15.05.2026.) / 5. doma\u0107a zada\u0107a" },
+      { lecture: "Memorijska hijerarhija (piru\u010dna memorija)", exercise: "Memorijska hijerarhija" },
+      { lecture: "Memorijska hijerarhija (virtualna memorija)", exercise: "Memorijska hijerarhija" },
+      { lecture: "Ulazno-izlazni sustav", exercise: "Proto\u010dnost. 6. doma\u0107a zada\u0107a (05.06.2026.)" },
+      { lecture: "Vi\u0161eprocesorski sustavi", exercise: "Nadoknade" },
     ]),
     grading: [
-      { component: "Kolokvij", maxPoints: 30, note: "20.04.2026." },
-      { component: "Kviz", maxPoints: 10, note: "29.04.2026." },
-      { component: "Doma\u0107e zada\u0107e", maxPoints: 30 },
+      { component: "Kviz", maxPoints: 26, note: "10.04.2026." },
+      { component: "Kolokvij", maxPoints: 30, note: "15.05.2026." },
+      { component: "Doma\u0107e zada\u0107e", maxPoints: 9 },
+      { component: "Aktivnost u nastavi", maxPoints: 5 },
       { component: "Ispit", maxPoints: 30 },
     ],
-    exams: ["16.06.2026.", "30.06.2026.", "08.09.2026."],
+    exams: ["19.06.2026.", "03.07.2026.", "04.09.2026.", "11.09.2026."],
   },
 
   // ─── OVIS ─────────────────────────────────────────────────────────────
@@ -178,7 +179,7 @@ export const curriculum: Record<string, CurriculumEntry> = {
       { component: "Doma\u0107a zada\u0107a", maxPoints: 10 },
       { component: "Ispit", maxPoints: 30 },
     ],
-    exams: ["23.06.2026.", "07.07.2026.", "08.09.2026."],
+    exams: ["24.06.2026.", "08.07.2026.", "02.09.2026.", "08.09.2026."],
   },
 
   // ─── OI ───────────────────────────────────────────────────────────────
@@ -206,7 +207,7 @@ export const curriculum: Record<string, CurriculumEntry> = {
       { component: "2. kolokvij", maxPoints: 25, note: "12.05.2026." },
       { component: "Ispit", maxPoints: 50 },
     ],
-    exams: ["24.06.2026.", "08.07.2026.", "09.09.2026."],
+    exams: ["26.06.2026.", "10.07.2026.", "04.09.2026.", "11.09.2026."],
   },
 
   // ─── UPW ──────────────────────────────────────────────────────────────
@@ -236,6 +237,6 @@ export const curriculum: Record<string, CurriculumEntry> = {
       { component: "Kolokvij", maxPoints: 25, note: "25.05.2026." },
       { component: "Seminarski rad", maxPoints: 30 },
     ],
-    exams: ["15.06.2026.", "29.06.2026.", "07.09.2026."],
+    exams: ["16.06.2026.", "07.07.2026.", "03.09.2026.", "10.09.2026."],
   },
 };

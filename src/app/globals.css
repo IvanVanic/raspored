@@ -453,14 +453,6 @@ body {
   text-align: center;
 }
 
-/* ── Urgency dot ─────────────────────────────────────────────── */
-.urgency-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
 
 /* ── Event row ───────────────────────────────────────────────── */
 .event-row {

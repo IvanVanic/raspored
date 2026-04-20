@@ -5,9 +5,13 @@
 
 export const SEMESTER_START = "2026-03-02" as const;
 
-const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 export const TOTAL_WEEKS = 15;
+
+/** UTC epoch of a local calendar date — DST-safe for day-diff math. */
+function localDateUTC(d: Date): number {
+  return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+}
 
 /**
  * Parse SEMESTER_START as local midnight (not UTC).
@@ -19,24 +23,13 @@ export function semesterStartLocal(): Date {
   return new Date(y, m - 1, d);
 }
 
-// Croatian day names in schedule order (index 0 = Monday, index 4 = Friday)
-const CROATIAN_DAY_NAMES: readonly string[] = [
-  "Ponedjeljak",
-  "Utorak",
-  "Srijeda",
-  "Četvrtak",
-  "Petak",
-] as const;
-
 /**
  * Returns the current teaching week (1–15), clamped to the valid range.
  * Week 1 begins on SEMESTER_START (Monday, 2026-03-02).
  */
 export function getCurrentWeek(): number {
-  const start = semesterStartLocal();
-  const now = new Date();
-  const elapsed = now.getTime() - start.getTime();
-  const week = Math.floor(elapsed / MS_PER_WEEK) + 1;
+  const days = Math.floor((localDateUTC(new Date()) - localDateUTC(semesterStartLocal())) / MS_PER_DAY);
+  const week = Math.floor(days / 7) + 1;
   return Math.min(Math.max(week, 1), TOTAL_WEEKS);
 }
 
@@ -45,9 +38,8 @@ export function getCurrentWeek(): number {
  * Dates before SEMESTER_START return 1; dates after week 15 return 15.
  */
 export function getWeekForDate(date: Date): number {
-  const start = semesterStartLocal();
-  const elapsed = date.getTime() - start.getTime();
-  const week = Math.floor(elapsed / MS_PER_WEEK) + 1;
+  const days = Math.floor((localDateUTC(date) - localDateUTC(semesterStartLocal())) / MS_PER_DAY);
+  const week = Math.floor(days / 7) + 1;
   return Math.min(Math.max(week, 1), TOTAL_WEEKS);
 }
 
@@ -109,11 +101,7 @@ export function formatHrDate(date: Date): string {
  * Positive = future, negative = past, 0 = today.
  */
 export function daysUntil(date: Date): number {
-  const now = new Date();
-  // Normalize both to midnight local time for a clean day comparison
-  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const targetMidnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  return Math.round((targetMidnight.getTime() - todayMidnight.getTime()) / MS_PER_DAY);
+  return Math.round((localDateUTC(date) - localDateUTC(new Date())) / MS_PER_DAY);
 }
 
 /**
@@ -122,8 +110,8 @@ export function daysUntil(date: Date): number {
  */
 export function getWeekDates(week: number): { monday: Date; friday: Date } {
   const start = semesterStartLocal();
-  const monday = new Date(start.getTime() + (week - 1) * MS_PER_WEEK);
-  const friday = new Date(monday.getTime() + 4 * MS_PER_DAY);
+  const monday = new Date(start.getFullYear(), start.getMonth(), start.getDate() + (week - 1) * 7);
+  const friday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 4);
   return { monday, friday };
 }
 

@@ -138,9 +138,9 @@ function WeekStrip({
   currentWeek: number;
   slotType: "P" | "V";
 }) {
-  // Show current + next 2 weeks that have content
+  // Show next 3 weeks (skip current — hero card already shows it)
   const upcoming = curr.weeks
-    .filter(w => w.week >= currentWeek)
+    .filter(w => w.week > currentWeek)
     .slice(0, 3);
 
   if (upcoming.length === 0) return null;
