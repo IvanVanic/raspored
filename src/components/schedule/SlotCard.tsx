@@ -26,12 +26,22 @@ function detectGradingType(topic: string | undefined): "kolokvij" | "kviz" | "ko
 
 function MonitorIcon() {
   return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
       style={{ flexShrink: 0 }}>
       <rect x="2" y="3" width="20" height="14" rx="2" />
       <line x1="8" y1="21" x2="16" y2="21" />
       <line x1="12" y1="17" x2="12" y2="21" />
+    </svg>
+  );
+}
+
+function PlayNextIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"
+      style={{ flexShrink: 0 }}>
+      <path d="M5 4 L15 12 L5 20 Z" />
+      <rect x="16" y="4" width="3" height="16" rx="0.5" />
     </svg>
   );
 }
@@ -108,24 +118,37 @@ export function SlotCard({
           {slot.online && (
             <span
               className="slot-time-badge"
+              aria-label="Online"
+              title="Online"
               style={{
                 background: "color-mix(in srgb, var(--u-approaching) 18%, transparent)",
                 color: "var(--u-approaching)",
                 border: "1px solid color-mix(in srgb, var(--u-approaching) 30%, transparent)",
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 3,
+                padding: "3px 6px",
               }}
             >
               <MonitorIcon />
-              ONLINE
             </span>
           )}
           {timeStatus === "now" && (
             <span className="slot-time-badge" style={{ background: cc.accent }}>SAT</span>
           )}
           {timeStatus === "next" && (
-            <span className="slot-time-badge" style={{ background: "var(--muted-fg)" }}>SLJEDEĆE</span>
+            <span
+              className="slot-time-badge"
+              aria-label="Sljedeće"
+              title="Sljedeće"
+              style={{
+                background: "var(--muted-fg)",
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "3px 6px",
+              }}
+            >
+              <PlayNextIcon />
+            </span>
           )}
         </div>
       </div>
