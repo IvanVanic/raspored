@@ -141,7 +141,9 @@ export function SlotCard({
               aria-label="Sljedeće"
               title="Sljedeće"
               style={{
-                background: "var(--muted-fg)",
+                background: "var(--background)",
+                color: "var(--foreground)",
+                border: "1px solid var(--foreground)",
                 display: "inline-flex",
                 alignItems: "center",
                 padding: "3px 6px",
