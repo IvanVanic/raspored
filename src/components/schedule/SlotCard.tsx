@@ -1,9 +1,62 @@
 import type { Slot } from "@/data/types";
 import { subjectMap } from "@/data/schedule";
-import { getCourseColor } from "@/lib/labels";
+import { getCourseColor, EVENT_COLOR } from "@/lib/labels";
 import { MetaSep } from "@/components/shared/MetaSep";
 
 export type TimeStatus = "now" | "next" | null;
+
+const GRADING_RE = /\b(kolokvij|kviz|kontroln[ae]|obrana|ispit|laboratorij|domać[ae]\s+zadać[ae])\b/i;
+const PREP_RE = /\b(priprema|nadoknad|popravn|popravak|prošl|konzultacij)\b/i;
+
+function detectGradingType(topic: string | undefined): "kolokvij" | "kviz" | "kontrolna" | "obrana" | "ispit" | "laboratorij" | "domaca_zadaca" | null {
+  if (!topic || PREP_RE.test(topic)) return null;
+  const m = topic.match(GRADING_RE);
+  if (!m) return null;
+  const t = m[1].toLowerCase();
+  if (t.startsWith("kolokvij")) return "kolokvij";
+  if (t.startsWith("kviz")) return "kviz";
+  if (t.startsWith("kontroln")) return "kontrolna";
+  if (t.startsWith("obrana")) return "obrana";
+  if (t.startsWith("ispit")) return "ispit";
+  if (t.startsWith("laboratorij")) return "laboratorij";
+  if (t.startsWith("domać")) return "domaca_zadaca";
+  return null;
+}
+
+const SPARKLES = [
+  { top: "12%", left: "8%",  size: 6, delay: "0s",   dur: "3.2s" },
+  { top: "72%", left: "18%", size: 4, delay: "0.6s", dur: "2.7s" },
+  { top: "22%", left: "62%", size: 5, delay: "1.1s", dur: "3.4s" },
+  { top: "58%", left: "44%", size: 3, delay: "1.8s", dur: "2.5s" },
+  { top: "38%", left: "86%", size: 5, delay: "0.3s", dur: "3.0s" },
+  { top: "82%", left: "72%", size: 4, delay: "2.1s", dur: "2.9s" },
+  { top: "50%", left: "22%", size: 3, delay: "2.6s", dur: "3.1s" },
+];
+
+function SparkleOverlay({ color }: { color: string }) {
+  return (
+    <div className="sparkle-overlay" aria-hidden="true">
+      {SPARKLES.map((s, i) => (
+        <svg
+          key={i}
+          className="sparkle"
+          width={s.size}
+          height={s.size}
+          viewBox="0 0 24 24"
+          style={{
+            top: s.top,
+            left: s.left,
+            animationDelay: s.delay,
+            animationDuration: s.dur,
+            color,
+          }}
+        >
+          <path d="M12 0 L14 10 L24 12 L14 14 L12 24 L10 14 L0 12 L10 10 Z" fill="currentColor" />
+        </svg>
+      ))}
+    </div>
+  );
+}
 
 function MonitorIcon() {
   return (
@@ -33,6 +86,8 @@ export function SlotCard({
   const subj = subjectMap.get(slot.subject_id);
   const label = subj ? subj.short_name : slot.subject_id;
   const cc = getCourseColor(slot.subject_id);
+  const gradingType = detectGradingType(topic);
+  const sparkleColor = gradingType ? EVENT_COLOR[gradingType] : null;
 
   return (
     <div
@@ -43,9 +98,13 @@ export function SlotCard({
         borderRadius: 4,
         overflow: "hidden",
         position: "relative",
-        boxShadow: "inset 0 0 0 1px rgb(255 255 255 / 0.04)",
+        boxShadow: sparkleColor
+          ? `inset 0 0 0 1px color-mix(in srgb, ${sparkleColor} 28%, transparent)`
+          : "inset 0 0 0 1px rgb(255 255 255 / 0.04)",
       }}
     >
+      {sparkleColor && <SparkleOverlay color={sparkleColor} />}
+
       {/* Left accent line */}
       <div
         style={{

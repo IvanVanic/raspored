@@ -319,6 +319,46 @@ body {
   animation: slot-pulse 3s ease-in-out infinite;
 }
 
+/* ── Sparkle overlay (grading-event slots) ───────────────────── */
+.sparkle-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.sparkle {
+  position: absolute;
+  opacity: 0;
+  animation-name: sparkle-pulse;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+@keyframes sparkle-pulse {
+  0%, 100% {
+    opacity: 0;
+    transform: translateY(2px) scale(0.4) rotate(0deg);
+  }
+  30% {
+    opacity: 0.85;
+    transform: translateY(0) scale(1) rotate(90deg);
+  }
+  60% {
+    opacity: 0.6;
+    transform: translateY(-2px) scale(0.85) rotate(180deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sparkle {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
 /* ── Row entrance ────────────────────────────────────────────── */
 @keyframes row-in {
   from { opacity: 0; transform: translateY(6px); }
