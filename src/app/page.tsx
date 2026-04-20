@@ -43,7 +43,7 @@ export default function Home() {
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
   return (
-    <div className="min-h-screen pb-20 md:pb-0 mx-auto max-w-none md:max-w-6xl">
+    <div className="max-w-5xl mx-auto min-h-screen pb-20 md:pb-0">
       <TopBar
         view={view}
         onViewChange={setView}
