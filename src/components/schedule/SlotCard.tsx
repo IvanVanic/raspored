@@ -53,7 +53,9 @@ export function SlotCard({
   const label = subj ? subj.short_name : slot.subject_id;
   const cc = getCourseColor(slot.subject_id);
   const gradingType = detectGradingType(topic);
-  const sparkleColor = gradingType ? EVENT_COLOR[gradingType] : null;
+  const sparkleColors = gradingType
+    ? [cc.accent, cc.text, EVENT_COLOR[gradingType]]
+    : null;
 
   return (
     <div
@@ -64,20 +66,21 @@ export function SlotCard({
         borderRadius: 4,
         overflow: "hidden",
         position: "relative",
-        boxShadow: sparkleColor
-          ? `inset 0 0 0 1px color-mix(in srgb, ${sparkleColor} 28%, transparent)`
+        boxShadow: sparkleColors
+          ? `inset 0 0 0 1px color-mix(in srgb, ${cc.accent} 35%, transparent)`
           : "inset 0 0 0 1px rgb(255 255 255 / 0.04)",
       }}
     >
-      {sparkleColor && (
+      {sparkleColors && (
         <Sparkle
-          color={sparkleColor}
-          count={18}
-          minSize={3}
-          maxSize={8}
-          overflowPx={6}
-          fadeOutSpeed={14}
+          color={sparkleColors}
+          count={14}
+          minSize={2}
+          maxSize={7}
+          overflowPx={4}
+          fadeOutSpeed={4}
           flicker={false}
+          newSparkleOnFadeOut
         />
       )}
 
