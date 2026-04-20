@@ -132,18 +132,16 @@ export function SlotCard({
               <MonitorIcon />
             </span>
           )}
-          {timeStatus === "now" && (
-            <span className="slot-time-badge" style={{ background: cc.accent }}>SAT</span>
-          )}
           {timeStatus === "next" && (
             <span
               className="slot-time-badge"
               aria-label="Sljedeće"
               title="Sljedeće"
               style={{
-                background: "color-mix(in srgb, var(--foreground) 14%, transparent)",
-                color: "var(--foreground)",
-                border: "1px solid color-mix(in srgb, var(--foreground) 35%, transparent)",
+                background: "color-mix(in srgb, var(--m-accent) 18%, transparent)",
+                color: "var(--m-text)",
+                border: "1px solid color-mix(in srgb, var(--m-accent) 35%, transparent)",
+                boxShadow: "0 0 8px color-mix(in srgb, var(--m-accent) 30%, transparent)",
                 display: "inline-flex",
                 alignItems: "center",
                 padding: "3px 6px",
