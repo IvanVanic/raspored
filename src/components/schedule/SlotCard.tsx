@@ -137,22 +137,20 @@ export function SlotCard({
         </div>
       )}
 
-      {/* Row 3: Meta — group · room · prof */}
+      {/* Row 3: Meta — room · group · prof (room hidden when online; the top badge covers it) */}
       <div className="mt-1.5 text-muted-fg text-[11px] leading-none flex items-center gap-0 opacity-60 group-hover:opacity-90 t-fast transition-opacity">
-        {slot.online ? (
-          <span className="font-medium" style={{ color: "var(--u-approaching)", opacity: 1 }}>Online</span>
-        ) : (
+        {!slot.online && slot.room && (
           <span className="font-medium tabular-nums">{slot.room}</span>
         )}
         {slot.group && (
           <>
-            <MetaSep />
+            {!slot.online && slot.room && <MetaSep />}
             <span className="font-medium">{slot.group}</span>
           </>
         )}
         {showProf && slot.prof && (
           <>
-            <MetaSep />
+            {((!slot.online && slot.room) || slot.group) && <MetaSep />}
             <span className="truncate">{slot.prof}</span>
           </>
         )}
