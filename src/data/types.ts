@@ -69,11 +69,20 @@ export interface GradingInfo {
   note?: string;
 }
 
+export interface ImportantDate {
+  label: string;
+  date: string;
+  type: EventType;
+  source?: string;
+  points?: number | null;
+}
+
 export interface CurriculumEntry {
   subjectId: string;
   weeks: WeekTopic[];
   grading: GradingInfo[];
   exams: string[];
+  importantDates?: ImportantDate[];
 }
 
 export type UrgencyLevel = "critical" | "approaching" | "ambient";
@@ -85,8 +94,10 @@ export interface CriticalDate {
   label: string;
   date: Date | null;
   week: number;
-  type: "kolokvij" | "obrana" | "kviz" | "ispit" | "laboratorij" | "predaja" | "zadavanje" | "domaca_zadaca" | "kontrolna";
+  type: "kolokvij" | "obrana" | "kviz" | "ispit" | "laboratorij" | "predaja" | "zadavanje" | "domaca_zadaca" | "kontrolna" | "predrok";
   urgency: UrgencyLevel;
+  source?: string;
+  points?: number | null;
 }
 
 export type EventType = CriticalDate["type"];

@@ -150,6 +150,24 @@ export function extractCriticalDates(
       });
     }
 
+    // --- Scan source-backed important dates that are not reliably present in weekly topics ---
+    for (const important of entry.importantDates ?? []) {
+      const date = parseHrDate(important.date);
+      const week = date ? getWeekForDate(date) : 15;
+      const urgency = computeUrgency(date);
+
+      results.push({
+        subjectId,
+        label: important.label,
+        date,
+        week,
+        type: important.type,
+        urgency,
+        source: important.source,
+        points: important.points ?? null,
+      });
+    }
+
     // --- Scan grading notes for dated items not already caught by week topics ---
     const seenDates = new Set(results.filter(r => r.subjectId === subjectId && r.date).map(r => r.date!.getTime()));
     for (const g of entry.grading) {

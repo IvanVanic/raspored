@@ -1,18 +1,28 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { curriculum } from "@/data/curriculum";
-import { subjectMap } from "@/data/schedule";
 import { extractCriticalDates } from "@/lib/extraction";
-import { semesterStartLocal, TOTAL_WEEKS, formatHrDate, getWeekForDate } from "@/lib/date-utils";
-import { TYPE_LABEL, EVENT_COLOR, TEST_TYPES, getCourseColor } from "@/lib/labels";
-import { daysUntil } from "@/lib/date-utils";
+import { semesterStartLocal, TOTAL_WEEKS } from "@/lib/date-utils";
+import { EVENT_COLOR, TEST_TYPES } from "@/lib/labels";
 import type { CurriculumEntry, CriticalDate } from "@/data/types";
 
-const CROATIAN_MONTHS = ["Siječanj", "Veljača", "Ožujak", "Travanj", "Svibanj", "Lipanj",
-  "Srpanj", "Kolovoz", "Rujan", "Listopad", "Studeni", "Prosinac"];
+const CROATIAN_MONTHS = [
+  "Sijecanj",
+  "Veljaca",
+  "Ozujak",
+  "Travanj",
+  "Svibanj",
+  "Lipanj",
+  "Srpanj",
+  "Kolovoz",
+  "Rujan",
+  "Listopad",
+  "Studeni",
+  "Prosinac",
+];
 
-const WEEKDAY_HEADERS = ["P", "U", "S", "Č", "P", "S", "N"];
+const WEEKDAY_HEADERS = ["P", "U", "S", "C", "P", "S", "N"];
 
 const CALENDAR_MONTHS: Array<{ year: number; month: number }> = [
   { year: 2026, month: 2 },
@@ -20,6 +30,19 @@ const CALENDAR_MONTHS: Array<{ year: number; month: number }> = [
   { year: 2026, month: 4 },
   { year: 2026, month: 5 },
 ];
+
+const SHORT_EVENT_CODE: Partial<Record<CriticalDate["type"], string>> = {
+  kolokvij: "Kol",
+  ispit: "Isp",
+  predrok: "Pre",
+  obrana: "Obr",
+  kviz: "Kvz",
+  kontrolna: "KZ",
+  predaja: "Pr",
+  laboratorij: "Lab",
+  domaca_zadaca: "DZ",
+  zadavanje: "Zad",
+};
 
 function isToday(date: Date): boolean {
   const now = new Date();
@@ -61,46 +84,32 @@ function monthDays(year: number, month: number): Date[] {
   return days;
 }
 
-/** Returns the event-type color for consistent legend matching. */
-function resolveEventColor(event: CriticalDate): string {
+function eventColor(event: CriticalDate): string {
   return EVENT_COLOR[event.type];
 }
 
-const SHORT_EVENT_CODE: Partial<Record<CriticalDate["type"], string>> = {
-  kolokvij: "Kol",
-  ispit: "Isp",
-  obrana: "Obr",
-  kviz: "Kvz",
-  kontrolna: "KZ",
-  predaja: "Pr",
-  laboratorij: "Lab",
-  domaca_zadaca: "DZ",
-  zadavanje: "Zad",
-};
-
-// ─── Day event indicators ─────────────────────────────────────────────────────
-// Each day cell shows colored pill-bars instead of dots.
-// Up to 3 events get individual bars; 4+ collapses into a "+N" overflow pill.
-
-interface DayPillsProps {
-  events: CriticalDate[];
-  selected: boolean;
+function assessmentEvent(events: CriticalDate[]): CriticalDate | null {
+  return events.find((event) => TEST_TYPES.has(event.type) || event.points !== undefined) ?? null;
 }
 
-function DayPills({ events, selected }: DayPillsProps) {
-  const MAX_PILLS = 2;
+function isDenseExamDay(events: CriticalDate[]): boolean {
+  const examLike: Set<CriticalDate["type"]> = new Set(["kolokvij", "ispit", "predrok", "kontrolna", "kviz"]);
+  return events.filter((event) => examLike.has(event.type)).length >= 2;
+}
+
+function DayPills({ events }: { events: CriticalDate[] }) {
+  const maxPills = 2;
 
   if (events.length === 0) {
     return <div style={{ height: 12 }} />;
   }
 
-  // 3+ events: show a count badge with most urgent color
-  if (events.length > MAX_PILLS) {
-    const mostUrgent = events.reduce((best, ev) => {
+  if (events.length > maxPills) {
+    const mostUrgent = events.reduce((best, event) => {
       const rank = { critical: 2, approaching: 1, ambient: 0 };
-      return rank[ev.urgency] > rank[best.urgency] ? ev : best;
+      return rank[event.urgency] > rank[best.urgency] ? event : best;
     }, events[0]);
-    const color = resolveEventColor(mostUrgent);
+    const color = eventColor(mostUrgent);
 
     return (
       <div style={{ display: "flex", justifyContent: "center", height: 12 }}>
@@ -113,7 +122,6 @@ function DayPills({ events, selected }: DayPillsProps) {
             borderRadius: 4,
             padding: "1px 5px",
             lineHeight: "12px",
-            letterSpacing: "-0.02em",
           }}
         >
           {events.length}
@@ -122,7 +130,6 @@ function DayPills({ events, selected }: DayPillsProps) {
     );
   }
 
-  // 1-2 events: individual labeled pills
   return (
     <div
       style={{
@@ -134,12 +141,12 @@ function DayPills({ events, selected }: DayPillsProps) {
         height: 12,
       }}
     >
-      {events.map((ev, i) => {
-        const color = resolveEventColor(ev);
-        const code = SHORT_EVENT_CODE[ev.type] ?? ev.type.slice(0, 3);
+      {events.map((event, index) => {
+        const color = eventColor(event);
+        const code = SHORT_EVENT_CODE[event.type] ?? event.type.slice(0, 3);
         return (
           <span
-            key={i}
+            key={`${event.subjectId}-${event.label}-${index}`}
             style={{
               flex: 1,
               height: 12,
@@ -152,9 +159,8 @@ function DayPills({ events, selected }: DayPillsProps) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              letterSpacing: "-0.01em",
               lineHeight: 1,
-              opacity: selected ? 1 : 0.9,
+              opacity: 0.9,
             }}
           >
             {code}
@@ -165,80 +171,60 @@ function DayPills({ events, selected }: DayPillsProps) {
   );
 }
 
-// ─── Dense-day "provjera" indicator ──────────────────────────────────────────
-// If a day has 2+ exam-class events we mark it with a faint amber halo so it
-// reads as a "heavy" day even before the user taps.
-
-function isDenseExamDay(events: CriticalDate[]): boolean {
-  const examLike: Set<CriticalDate["type"]> = new Set(["kolokvij", "ispit", "kontrolna", "kviz"]);
-  return events.filter(e => examLike.has(e.type)).length >= 2;
-}
-
-// ─── Month grid ───────────────────────────────────────────────────────────────
-
 interface MonthGridProps {
   year: number;
   month: number;
   eventMap: Map<string, CriticalDate[]>;
-  selectedKey: string | null;
   onDaySelect: (key: string, date: Date) => void;
 }
 
-function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGridProps) {
+function MonthGrid({ year, month, eventMap, onDaySelect }: MonthGridProps) {
   const days = monthDays(year, month);
   const firstWeekday = isoWeekday(days[0]);
 
   return (
     <div className="mb-5">
-      <div
-        className="calendar-month-header px-0"
-        style={{ paddingTop: 10, paddingBottom: 8, letterSpacing: "-0.01em" }}
-      >
+      <div className="calendar-month-header px-0" style={{ paddingTop: 10, paddingBottom: 8 }}>
         {CROATIAN_MONTHS[month]} {year}
       </div>
 
-      {/* Weekday header row */}
       <div className="calendar-grid">
-        {WEEKDAY_HEADERS.map((label, i) => (
-          <div key={i} className="calendar-weekday-header">{label}</div>
+        {WEEKDAY_HEADERS.map((label, index) => (
+          <div key={`${label}-${index}`} className="calendar-weekday-header">
+            {label}
+          </div>
         ))}
       </div>
 
-      {/* Day cells */}
       <div className="calendar-grid">
-        {Array.from({ length: firstWeekday }, (_, i) => (
-          <div key={`empty-${i}`} className="calendar-cell" />
+        {Array.from({ length: firstWeekday }, (_, index) => (
+          <div key={`empty-${index}`} className="calendar-cell" />
         ))}
 
         {days.map((day) => {
           const key = toKey(day);
           const events = eventMap.get(key) ?? [];
           const today = isToday(day);
-          const selected = selectedKey === key;
           const hasEvents = events.length > 0;
           const weekday = isoWeekday(day);
           const teachingWeek = weekday === 0 ? getTeachingWeek(day) : null;
           const isWeekend = weekday >= 5;
           const denseExam = isDenseExamDay(events);
+          const assessment = assessmentEvent(events);
+          const assessmentColor = assessment ? eventColor(assessment) : null;
 
-          // Build background: today tint > dense exam tint > selected tint > default
           let cellBg = "transparent";
           if (today) cellBg = "color-mix(in srgb, var(--m-accent) 10%, transparent)";
           if (denseExam && !today) cellBg = "color-mix(in srgb, var(--u-approaching) 7%, transparent)";
-          if (selected) cellBg = "color-mix(in srgb, var(--foreground) 10%, transparent)";
+          if (assessmentColor && !today) cellBg = `color-mix(in srgb, ${assessmentColor} 5%, transparent)`;
 
           return (
             <button
               key={key}
               onClick={() => onDaySelect(key, day)}
-              className={[
-                "calendar-cell",
-                today ? "calendar-today" : "",
-                selected ? "calendar-selected" : "",
-              ].join(" ")}
+              className={["calendar-cell", today ? "calendar-today" : ""].join(" ")}
               style={{
-                // All cells are buttons and feel tappable — cursor always pointer
-                cursor: "pointer",
+                cursor: hasEvents ? "pointer" : "default",
                 position: "relative",
                 display: "flex",
                 flexDirection: "column",
@@ -248,12 +234,23 @@ function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGri
                 paddingTop: 5,
                 paddingBottom: 5,
                 background: cellBg,
+                border: assessmentColor
+                  ? `1px solid color-mix(in srgb, ${assessmentColor} 40%, transparent)`
+                  : today
+                  ? "1px solid color-mix(in srgb, var(--m-accent) 60%, transparent)"
+                  : undefined,
+                borderBottom: assessmentColor || today ? undefined : "1px solid var(--border-subtle)",
+                borderRadius: assessmentColor || today ? 4 : undefined,
+                boxShadow: today
+                  ? "inset 0 0 0 1px color-mix(in srgb, var(--m-accent) 35%, transparent), 0 0 0 2px color-mix(in srgb, var(--m-accent) 8%, transparent)"
+                  : assessmentColor
+                  ? `inset 0 0 0 1px color-mix(in srgb, ${assessmentColor} 16%, transparent)`
+                  : undefined,
                 opacity: isWeekend && !hasEvents ? 0.38 : 1,
-                minHeight: 52, // comfortable tap target
+                minHeight: 52,
                 WebkitTapHighlightColor: "transparent",
               }}
             >
-              {/* Teaching week label — top-right micro text */}
               {teachingWeek !== null && (
                 <span
                   style={{
@@ -262,7 +259,6 @@ function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGri
                     right: 2,
                     fontSize: 7,
                     fontWeight: 700,
-                    letterSpacing: "0.02em",
                     color: "var(--muted-fg)",
                     lineHeight: 1,
                     fontVariantNumeric: "tabular-nums",
@@ -273,8 +269,7 @@ function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGri
                 </span>
               )}
 
-              {/* Dense exam day halo ring — amber inset ring */}
-              {denseExam && !selected && (
+              {denseExam && (
                 <span
                   style={{
                     position: "absolute",
@@ -286,16 +281,11 @@ function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGri
                 />
               )}
 
-              {/* Date number */}
               <span
                 style={{
                   fontSize: 13,
-                  fontWeight: today ? 700 : selected ? 600 : 500,
-                  color: today
-                    ? "var(--m-text)"
-                    : selected
-                    ? "var(--foreground)"
-                    : "var(--foreground)",
+                  fontWeight: today ? 700 : 500,
+                  color: today ? "var(--m-text)" : "var(--foreground)",
                   lineHeight: 1,
                   fontVariantNumeric: "tabular-nums",
                 }}
@@ -303,8 +293,7 @@ function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGri
                 {day.getDate()}
               </span>
 
-              {/* Event pill bars — always rendered to keep cell height stable */}
-              <DayPills events={events} selected={selected} />
+              <DayPills events={events} />
             </button>
           );
         })}
@@ -312,241 +301,6 @@ function MonthGrid({ year, month, eventMap, selectedKey, onDaySelect }: MonthGri
     </div>
   );
 }
-
-// ─── Event detail panel ───────────────────────────────────────────────────────
-
-interface EventDetailPanelProps {
-  selectedDate: Date;
-  events: CriticalDate[];
-  currentWeek: number;
-  onClose: () => void;
-  onTestTap?: (event: CriticalDate) => void;
-}
-
-function EventDetailPanel({ selectedDate, events, currentWeek, onClose, onTestTap }: EventDetailPanelProps) {
-  const week = getWeekForDate(selectedDate);
-  const isCurrentWeek = week === currentWeek;
-
-  return (
-    <div
-      style={{
-        margin: "0 0 14px 0",
-        borderRadius: 12,
-        overflow: "hidden",
-        border: "1px solid var(--border)",
-        background: "var(--card)",
-        animation: "row-in 150ms var(--ease-out-expo) both",
-      }}
-    >
-      {/* Panel header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "10px 12px 10px 14px",
-          borderBottom: "1px solid var(--border-subtle)",
-          background: "var(--muted)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: "var(--foreground)",
-              fontVariantNumeric: "tabular-nums",
-              letterSpacing: "-0.01em",
-            }}
-          >
-            {formatHrDate(selectedDate)}
-          </span>
-          {/* Week badge — purely informational, styled distinctly from interactive chips */}
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 600,
-              padding: "2px 7px",
-              borderRadius: 6,
-              fontVariantNumeric: "tabular-nums",
-              background: isCurrentWeek
-                ? "color-mix(in srgb, var(--m-accent) 20%, transparent)"
-                : "color-mix(in srgb, var(--muted-fg) 12%, transparent)",
-              color: isCurrentWeek ? "var(--m-text)" : "var(--muted-fg)",
-              letterSpacing: "0.02em",
-              userSelect: "none",
-            }}
-          >
-            T{week}{isCurrentWeek ? " · Sada" : ""}
-          </span>
-        </div>
-
-        {/* Close — explicit label so it reads as an action, not a decoration */}
-        <button
-          onClick={onClose}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            fontSize: 11,
-            fontWeight: 600,
-            color: "var(--muted-fg)",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "4px 6px",
-            borderRadius: 6,
-            lineHeight: 1,
-          }}
-          aria-label="Zatvori detalj"
-        >
-          <span style={{ fontSize: 15, lineHeight: 1 }}>×</span>
-        </button>
-      </div>
-
-      {/* Event list */}
-      <div style={{ padding: "10px 14px 12px" }}>
-        {events.length === 0 ? (
-          <p style={{ fontSize: 12, color: "var(--muted-fg)", margin: 0 }}>
-            Nema rokova na ovaj datum.
-          </p>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {events.map((event, i) => {
-              const subj = subjectMap.get(event.subjectId);
-              const cc = getCourseColor(event.subjectId);
-              const isTest = TEST_TYPES.has(event.type);
-              const barColor = resolveEventColor(event);
-              const days = event.date ? daysUntil(event.date) : null;
-              const countdownLabel = days === null ? null : days === 0 ? "danas" : days === 1 ? "sutra" : days > 0 ? `za ${days}d` : "prošlo";
-
-              return (
-                <button
-                  key={i}
-                  onClick={() => isTest && onTestTap?.(event)}
-                  disabled={!isTest || !onTestTap}
-                  style={{
-                    all: "unset",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    borderRadius: 6,
-                    background: `color-mix(in srgb, ${barColor} 6%, transparent)`,
-                    padding: "8px 10px",
-                    cursor: isTest && onTestTap ? "pointer" : "default",
-                    boxSizing: "border-box",
-                    width: "100%",
-                  }}
-                >
-                  {/* Colored left stripe — course accent */}
-                  <span
-                    style={{
-                      width: 3,
-                      minWidth: 3,
-                      alignSelf: "stretch",
-                      borderRadius: 2,
-                      background: cc.accent,
-                      flexShrink: 0,
-                    }}
-                  />
-
-                  {/* Text block */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        flexWrap: "wrap",
-                        marginBottom: 2,
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 700,
-                          color: "var(--foreground)",
-                          lineHeight: 1.2,
-                        }}
-                      >
-                        {TYPE_LABEL[event.type]}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: cc.text,
-                          lineHeight: 1.2,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          maxWidth: 120,
-                        }}
-                      >
-                        {subj?.short_name ?? event.subjectId}
-                      </span>
-                    </div>
-                    {subj?.full_name && (
-                      <p
-                        style={{
-                          fontSize: 10,
-                          color: "var(--muted-fg)",
-                          margin: 0,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          opacity: 0.7,
-                        }}
-                      >
-                        {subj.full_name}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Countdown badge or tap-to-detail */}
-                  {isTest && onTestTap ? (
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        letterSpacing: "0.04em",
-                        color: barColor,
-                        background: `color-mix(in srgb, ${barColor} 14%, transparent)`,
-                        border: `1px solid color-mix(in srgb, ${barColor} 30%, transparent)`,
-                        padding: "3px 8px",
-                        borderRadius: 5,
-                        flexShrink: 0,
-                        textTransform: "uppercase",
-                        lineHeight: 1,
-                      }}
-                    >
-                      Otvori
-                    </span>
-                  ) : countdownLabel && days !== null && days >= 0 ? (
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 600,
-                        color: days <= 3 ? "var(--u-critical)" : "var(--muted-fg)",
-                        flexShrink: 0,
-                        lineHeight: 1,
-                        fontVariantNumeric: "tabular-nums",
-                      }}
-                    >
-                      {countdownLabel}
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Legend ───────────────────────────────────────────────────────────────────
 
 function CalendarLegend() {
   return (
@@ -560,18 +314,15 @@ function CalendarLegend() {
         borderTop: "1px solid var(--border-subtle)",
       }}
     >
-      {/* Event type legend — labeled pills to match the calendar cells */}
       {([
         ["kolokvij", "Kolokvij", "Kol"] as const,
         ["ispit", "Ispit", "Isp"] as const,
+        ["predrok", "Predrok", "Pre"] as const,
         ["obrana", "Obrana", "Obr"] as const,
         ["kviz", "Kviz", "Kvz"] as const,
         ["kontrolna", "Kontrolna", "KZ"] as const,
       ]).map(([type, label, code]) => (
-        <div
-          key={type}
-          style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--muted-fg)" }}
-        >
+        <div key={type} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--muted-fg)" }}>
           <span
             style={{
               display: "inline-flex",
@@ -593,35 +344,7 @@ function CalendarLegend() {
         </div>
       ))}
 
-      {/* Today indicator */}
-      <div
-        style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--muted-fg)" }}
-      >
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 18,
-            height: 18,
-            borderRadius: 4,
-            background: "color-mix(in srgb, var(--m-accent) 12%, transparent)",
-            border: "1px solid color-mix(in srgb, var(--m-accent) 40%, transparent)",
-            fontSize: 9,
-            fontWeight: 700,
-            color: "var(--m-text)",
-            fontVariantNumeric: "tabular-nums",
-          }}
-        >
-          {new Date().getDate()}
-        </span>
-        <span style={{ fontWeight: 500 }}>Danas</span>
-      </div>
-
-      {/* Dense exam day indicator */}
-      <div
-        style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--muted-fg)" }}
-      >
+      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--muted-fg)" }}>
         <span
           style={{
             display: "inline-flex",
@@ -633,58 +356,68 @@ function CalendarLegend() {
             flexShrink: 0,
           }}
         />
-        <span style={{ fontWeight: 500 }}>Provjera</span>
+        <span style={{ fontWeight: 500 }}>Gust dan</span>
       </div>
     </div>
   );
 }
 
-// ─── Root export ──────────────────────────────────────────────────────────────
-
 export function SemesterTimeline({
   currentWeek,
   isOpen,
   onClose,
-  onTestTap,
+  onNavigateToDate,
 }: {
   currentWeek: number;
   isOpen: boolean;
   onClose: () => void;
-  onTestTap?: (event: CriticalDate) => void;
+  onNavigateToDate?: (date: Date) => void;
 }) {
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const scrollBodyRef = useRef<HTMLDivElement | null>(null);
+  const monthRefs = useRef(new Map<string, HTMLDivElement>());
 
   const eventMap = useMemo<Map<string, CriticalDate[]>>(() => {
     const dates = extractCriticalDates(curriculum as Record<string, CurriculumEntry>);
     const map = new Map<string, CriticalDate[]>();
-    for (const cd of dates) {
-      if (!cd.date) continue;
-      const key = toKey(cd.date);
+    for (const date of dates) {
+      if (!date.date) continue;
+      const key = toKey(date.date);
       if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(cd);
+      map.get(key)!.push(date);
     }
     return map;
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
+
+    requestAnimationFrame(() => {
+      const target = monthRefs.current.get(currentMonthKey);
+      const body = scrollBodyRef.current;
+      if (!target || !body) return;
+      body.scrollTop = target.offsetTop - body.offsetTop;
+    });
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleDaySelect = (key: string, date: Date) => {
-    if (selectedKey === key) {
-      setSelectedKey(null);
-      setSelectedDate(null);
-    } else {
-      setSelectedKey(key);
-      setSelectedDate(date);
-    }
+    const events = eventMap.get(key) ?? [];
+    if (events.length === 0) return;
+    onNavigateToDate?.(date);
+    onClose();
   };
-
-  const closeDetail = () => {
-    setSelectedKey(null);
-    setSelectedDate(null);
-  };
-
-  const selectedEvents = selectedKey ? (eventMap.get(selectedKey) ?? []) : [];
 
   return (
     <>
@@ -710,7 +443,6 @@ export function SemesterTimeline({
           overflow: "hidden",
         }}
       >
-        {/* Drag handle */}
         <div style={{ display: "flex", justifyContent: "center", paddingTop: 12, paddingBottom: 6, flexShrink: 0 }}>
           <div
             style={{
@@ -722,7 +454,6 @@ export function SemesterTimeline({
           />
         </div>
 
-        {/* Sheet title row */}
         <div
           style={{
             display: "flex",
@@ -733,9 +464,7 @@ export function SemesterTimeline({
           }}
         >
           <div>
-            <span style={{ fontSize: 14, fontWeight: 800, color: "var(--foreground)", letterSpacing: "-0.02em" }}>
-              Semestar
-            </span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: "var(--foreground)" }}>Semestar</span>
             <span
               style={{
                 fontSize: 11,
@@ -745,7 +474,7 @@ export function SemesterTimeline({
                 letterSpacing: "0.06em",
               }}
             >
-              Ožujak&ndash;Lipanj 2026
+              T{currentWeek}/15 - Ozujak-Lipanj 2026
             </span>
           </div>
           <button
@@ -767,30 +496,23 @@ export function SemesterTimeline({
           </button>
         </div>
 
-        {/* Scrollable calendar body */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "0 16px 40px" }}>
-
-          {/* Sticky day-detail panel */}
-          {selectedKey && selectedDate && (
-            <EventDetailPanel
-              selectedDate={selectedDate}
-              events={selectedEvents}
-              currentWeek={currentWeek}
-              onClose={closeDetail}
-              onTestTap={onTestTap}
-            />
-          )}
-
-          {/* Month grids */}
+        <div ref={scrollBodyRef} style={{ flex: 1, overflowY: "auto", padding: "0 16px 40px" }}>
           {CALENDAR_MONTHS.map(({ year, month }) => (
-            <MonthGrid
+            <div
               key={`${year}-${month}`}
-              year={year}
-              month={month}
-              eventMap={eventMap}
-              selectedKey={selectedKey}
-              onDaySelect={handleDaySelect}
-            />
+              ref={(node) => {
+                const key = `${year}-${month}`;
+                if (node) monthRefs.current.set(key, node);
+                else monthRefs.current.delete(key);
+              }}
+            >
+              <MonthGrid
+                year={year}
+                month={month}
+                eventMap={eventMap}
+                onDaySelect={handleDaySelect}
+              />
+            </div>
           ))}
 
           <CalendarLegend />

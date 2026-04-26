@@ -57,10 +57,11 @@ export const curriculum: Record<string, CurriculumEntry> = {
       { lecture: "Priprema za ispit", exercise: "Nadoknada kviza i prakti\u010dnog kolokvija" },
     ]),
     grading: [
-      { component: "Kolokvij", maxPoints: 30, note: "15.04.2026." },
-      { component: "Kviz", maxPoints: 10, note: "22.04.2026." },
-      { component: "Laboratorijske vje\u017ebe", maxPoints: 20 },
-      { component: "Ispit", maxPoints: 40 },
+      { component: "Aktivnost na nastavi", maxPoints: 6 },
+      { component: "Kviz", maxPoints: 20, note: "22.04.2026." },
+      { component: "Prakti\u010dni kolokvij", maxPoints: 20, note: "15.04.2026." },
+      { component: "Laboratorijske vje\u017ebe", maxPoints: 24 },
+      { component: "Ispit", maxPoints: 30 },
     ],
     exams: ["18.06.2026.", "02.07.2026.", "01.09.2026.", "08.09.2026."],
   },
@@ -87,9 +88,9 @@ export const curriculum: Record<string, CurriculumEntry> = {
     ]),
     grading: [
       { component: "Kolokvij", maxPoints: 30, note: "20.04.2026." },
-      { component: "Kontrolna zada\u0107a 1", maxPoints: 10, note: "29.04.2026." },
-      { component: "Kontrolna zada\u0107a 2", maxPoints: 10, note: "03.06.2026." },
-      { component: "Ispit", maxPoints: 50 },
+      { component: "Kontrolna zada\u0107a 1", maxPoints: 20, note: "29.04.2026." },
+      { component: "Kontrolna zada\u0107a 2", maxPoints: 20, note: "03.06.2026." },
+      { component: "Ispit", maxPoints: 30 },
     ],
     exams: ["16.06.2026.", "30.06.2026.", "25.08.2026.", "10.09.2026."],
   },
@@ -121,6 +122,11 @@ export const curriculum: Record<string, CurriculumEntry> = {
       { component: "Ispit (projektni zadatak)", maxPoints: 40 },
     ],
     exams: ["25.06.2026.", "09.07.2026.", "26.08.2026.", "09.09.2026."],
+    importantDates: [
+      { label: "Nadoknada kolokvija", date: "28.05.2026.", type: "kolokvij", source: "Moodle: Va\u017eniji datumi" },
+      { label: "Popravni kolokvij", date: "11.06.2026.", type: "kolokvij", source: "Moodle: Va\u017eniji datumi" },
+      { label: "Predrok", date: "11.06.2026.", type: "predrok", source: "Moodle: Va\u017eniji datumi" },
+    ],
   },
 
   // ─── AOR ──────────────────────────────────────────────────────────────
@@ -144,7 +150,7 @@ export const curriculum: Record<string, CurriculumEntry> = {
       { lecture: "Vi\u0161eprocesorski sustavi", exercise: "Nadoknade" },
     ]),
     grading: [
-      { component: "Kviz", maxPoints: 26, note: "10.04.2026." },
+      { component: "Kviz", maxPoints: 26, note: "11.04.2026. 11:00-12:00 online" },
       { component: "Kolokvij", maxPoints: 30, note: "15.05.2026." },
       { component: "Doma\u0107e zada\u0107e", maxPoints: 9 },
       { component: "Aktivnost u nastavi", maxPoints: 5 },
@@ -203,9 +209,10 @@ export const curriculum: Record<string, CurriculumEntry> = {
       { lecture: "Metoda raspoređivanja", exercise: "Rje\u0161avanje problemskih zadataka: metoda raspoređivanja" },
     ]),
     grading: [
-      { component: "1. kolokvij", maxPoints: 25, note: "07.04.2026." },
-      { component: "2. kolokvij", maxPoints: 25, note: "12.05.2026." },
-      { component: "Ispit", maxPoints: 50 },
+      { component: "1. kolokvij", maxPoints: 20, note: "07.04.2026." },
+      { component: "2. kolokvij", maxPoints: 20, note: "12.05.2026." },
+      { component: "Doma\u0107e zada\u0107e i kontinuirani rad", maxPoints: 30 },
+      { component: "Ispit", maxPoints: 30 },
     ],
     exams: ["26.06.2026.", "10.07.2026.", "04.09.2026.", "11.09.2026."],
   },

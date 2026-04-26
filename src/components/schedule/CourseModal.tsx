@@ -1,19 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { Check, ChevronDown, X } from "lucide-react";
 import type { Slot, CurriculumEntry, CriticalDate } from "@/data/types";
 import { subjectMap } from "@/data/schedule";
 import { curriculum } from "@/data/curriculum";
-import { getCurrentWeek, daysUntil, formatHrDate, getWeekDates, formatShortDate } from "@/lib/date-utils";
+import { daysUntil, formatHrDate, formatShortDate, getCurrentWeek, getWeekDates } from "@/lib/date-utils";
 import { extractCriticalDates } from "@/lib/extraction";
-import { TYPE_LABEL, EVENT_COLOR, TEST_TYPES, getCourseColor } from "@/lib/labels";
-import { getTestTopics, countCheckableItems } from "@/lib/test-topics";
-import { getProgress, toggleTopic as toggleTopicStorage, getCompletion } from "@/lib/study-progress";
-import { useKeyboard } from "@/hooks/useKeyboard";
-import { resources } from "@/data/resources";
-import type { ResourceLink } from "@/data/resources";
-
-// ── Types ──────────────────────────────────────────────────────────────────
+import { EVENT_COLOR, TEST_TYPES, TYPE_LABEL, getCourseColor } from "@/lib/labels";
+import { countCheckableItems, getTestTopics } from "@/lib/test-topics";
+import { getCompletion, getProgress, toggleTopic as toggleTopicStorage } from "@/lib/study-progress";
 
 type Tab = "pregled" | "rokovi";
 
@@ -25,111 +23,144 @@ interface CourseModalProps {
   onClose: () => void;
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-
 function daysLabel(days: number): string {
   if (days === 0) return "danas";
   if (days === 1) return "sutra";
+  if (days < 0) return "proslo";
   return `za ${days}d`;
+}
+
+function eventKey(event: CriticalDate): string {
+  return `${event.subjectId}:${event.type}:${event.week}:${event.label}:${event.date ? formatHrDate(event.date) : "week"}`;
+}
+
+function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3 mb-2">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-fg">
+        {children}
+      </p>
+      {action}
+    </div>
+  );
+}
+
+function Chevron({ open }: { open?: boolean }) {
+  return (
+    <ChevronDown
+      size={14}
+      strokeWidth={2.2}
+      aria-hidden="true"
+      style={{
+        transform: open ? "rotate(180deg)" : "none",
+        transition: "transform 160ms var(--ease-out-expo)",
+      }}
+    />
+  );
 }
 
 function CheckSvg({ color }: { color: string }) {
   return (
-    <svg
+    <Check
       className="prep-check-mark"
-      width="9" height="9" viewBox="0 0 9 9"
-      fill="none" stroke="currentColor"
-      strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+      size={9}
+      strokeWidth={1.75}
       style={{ color }}
-    >
-      <polyline points="1.5,4.5 3.5,6.5 7.5,2" />
-    </svg>
+    />
   );
 }
 
-// ── Subcomponents ──────────────────────────────────────────────────────────
+function eventPoints(event: CriticalDate, curr: CurriculumEntry): number | null {
+  if (event.points !== undefined) return event.points;
 
-function GradingBar({ grading }: { grading: CurriculumEntry["grading"] }) {
+  const numberedKolokvij = event.label.match(/\b(\d+)\.\s*kolokvij\b/i)?.[1];
+  if (event.type === "kolokvij" && numberedKolokvij) {
+    const exact = curr.grading.find((item) =>
+      new RegExp(`\\b${numberedKolokvij}\\.\\s*kolokvij\\b`, "i").test(item.component)
+    );
+    if (exact) return exact.maxPoints;
+  }
+
+  const numberedProject = event.label.match(/\b(\d+)\.\s*projektn/i)?.[1];
+  if (event.type === "obrana" && numberedProject) {
+    const exact = curr.grading.find((item) =>
+      new RegExp(`\\b${numberedProject}\\.\\s*projektn`, "i").test(item.component)
+    );
+    if (exact) return exact.maxPoints;
+  }
+
+  const label = TYPE_LABEL[event.type].toLowerCase();
+  const match = curr.grading.find((item) => item.component.toLowerCase().includes(label));
+  return match?.maxPoints ?? null;
+}
+
+function GradingSummary({ curr, accent }: { curr: CurriculumEntry; accent: string }) {
   const [expanded, setExpanded] = useState(false);
-  const total = grading.reduce((s, g) => s + g.maxPoints, 0);
+  const total = curr.grading.reduce((sum, item) => sum + item.maxPoints, 0);
 
   return (
-    <div>
-      {/* Stacked proportion bar — tap to expand detail */}
+    <section>
+      <SectionTitle action={
+        <button
+          onClick={() => setExpanded((value) => !value)}
+          className="text-[11px] font-semibold text-muted-fg"
+          style={{ background: "none", border: "none", cursor: "pointer" }}
+        >
+          {expanded ? "Sakrij" : "Detalji"}
+        </button>
+      }>
+        Vrednovanje
+      </SectionTitle>
+
       <button
-        onClick={() => setExpanded(v => !v)}
-        className="w-full text-left"
-        style={{ WebkitTapHighlightColor: "transparent" }}
-        aria-label="Vrednovanje"
+        onClick={() => setExpanded((value) => !value)}
+        className="w-full"
+        style={{ all: "unset", display: "block", width: "100%", cursor: "pointer" }}
       >
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-fg">
-            Vrednovanje
-          </span>
-          <span
-            className="text-[10px] font-semibold tabular-nums text-muted-fg"
-            style={{ transition: "transform 150ms var(--ease-out-expo)", display: "inline-block", transform: expanded ? "rotate(180deg)" : "none" }}
-          >
-            {expanded ? "▴" : "▾"}
-          </span>
-        </div>
-        <div className="h-2.5 rounded-full overflow-hidden flex" style={{ background: "var(--border)" }}>
-          {grading.map((g, i) => {
-            const pct = total > 0 ? (g.maxPoints / total) * 100 : 0;
-            const opacity = 0.45 + (i % 4) * 0.13;
+        <div className="h-2 rounded-full overflow-hidden flex" style={{ background: "var(--border)" }}>
+          {curr.grading.map((item, index) => {
+            const width = total > 0 ? (item.maxPoints / total) * 100 : 0;
             return (
               <div
-                key={i}
+                key={item.component}
                 style={{
-                  width: `${pct}%`,
-                  background: "var(--m-accent)",
-                  opacity,
-                  borderRight: i < grading.length - 1 ? "1px solid var(--card)" : undefined,
+                  width: `${width}%`,
+                  background: accent,
+                  opacity: 0.45 + (index % 4) * 0.13,
+                  borderRight: index < curr.grading.length - 1 ? "1px solid var(--background)" : undefined,
                 }}
               />
             );
           })}
         </div>
+        <div className="mt-2 flex items-center justify-between text-[11px] text-muted-fg">
+          <span>{curr.grading.length} komponenti</span>
+          <span className="tabular-nums">{total} bod.</span>
+        </div>
       </button>
 
-      {/* Expanded detail */}
       {expanded && (
-        <div className="mt-2 space-y-0" style={{ animation: "row-in 150ms var(--ease-out-expo) both" }}>
-          {grading.map((g, i) => {
-            const pct = total > 0 ? Math.round((g.maxPoints / total) * 100) : 0;
-            return (
-              <div
-                key={i}
-                className="flex items-center justify-between py-2"
-                style={{ borderBottom: i < grading.length - 1 ? "1px solid var(--border-subtle)" : undefined }}
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <span
-                    className="w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ background: "var(--m-accent)", opacity: 0.45 + (i % 4) * 0.13 }}
-                  />
-                  <span className="text-[12px] text-foreground truncate">{g.component}</span>
-                </div>
-                <div className="flex items-center gap-3 shrink-0 ml-3">
-                  <span className="text-[10px] tabular-nums text-muted-fg">{pct}%</span>
-                  <span className="text-[12px] tabular-nums font-bold text-foreground w-8 text-right">{g.maxPoints}</span>
-                </div>
+        <div className="mt-3 overflow-hidden rounded-xl" style={{ background: "var(--muted)", animation: "row-in 160ms var(--ease-out-expo) both" }}>
+          {curr.grading.map((item, index) => (
+            <div
+              key={item.component}
+              className="flex items-center justify-between gap-3 px-3 py-2.5"
+              style={{ borderBottom: index < curr.grading.length - 1 ? "1px solid var(--border-subtle)" : undefined }}
+            >
+              <div className="min-w-0">
+                <div className="text-[12px] font-medium text-foreground truncate">{item.component}</div>
+                {item.note && <div className="mt-0.5 text-[10px] text-muted-fg truncate">{item.note}</div>}
               </div>
-            );
-          })}
-          <div className="flex justify-between items-center pt-2" style={{ borderTop: "1px solid var(--border)" }}>
-            <span className="text-[10px] text-muted-fg uppercase tracking-[0.06em] font-semibold">Ukupno</span>
-            <span className="text-[13px] text-foreground tabular-nums font-bold">
-              {total} <span className="text-muted-fg text-[10px] font-normal">bod.</span>
-            </span>
-          </div>
+              <span className="text-[13px] font-semibold tabular-nums text-foreground shrink-0">{item.maxPoints}</span>
+            </div>
+          ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
-function WeekStrip({
+function WeekTimeline({
   curr,
   currentWeek,
   slotType,
@@ -138,62 +169,114 @@ function WeekStrip({
   currentWeek: number;
   slotType: "P" | "V";
 }) {
-  // Show next 3 weeks (skip current — hero card already shows it)
-  const upcoming = curr.weeks
-    .filter(w => w.week > currentWeek)
-    .slice(0, 3);
-
-  if (upcoming.length === 0) return null;
+  const weeks = curr.weeks.slice(Math.max(0, currentWeek - 1), Math.min(curr.weeks.length, currentWeek + 3));
 
   return (
-    <div>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-fg mb-2">
-        Nadolazeće teme
-      </p>
-      <div className="space-y-0 rounded-lg overflow-hidden" style={{ background: "var(--muted)" }}>
-        {upcoming.map((w, idx) => {
-          const isCurrent = w.week === currentWeek;
-          const topic = slotType === "P" ? w.lecture : w.exercise;
-          const { monday } = getWeekDates(w.week);
-          const dateLabel = formatShortDate(monday);
+    <section>
+      <SectionTitle>Plan</SectionTitle>
+      <div className="course-list">
+        {weeks.map((week) => {
+          const { monday } = getWeekDates(week.week);
+          const topic = slotType === "P" ? week.lecture : week.exercise;
+          const current = week.week === currentWeek;
 
           return (
-            <div
-              key={w.week}
-              className="flex items-center gap-3 px-3"
-              style={{
-                minHeight: 48,
-                borderBottom: idx < upcoming.length - 1 ? "1px solid var(--border-subtle)" : undefined,
-                background: isCurrent ? "color-mix(in srgb, var(--m-tint-strong) 85%, var(--muted) 15%)" : undefined,
-              }}
-            >
-              <div className="flex flex-col items-center shrink-0" style={{ width: 28 }}>
-                <span
-                  className="text-[10px] font-bold tabular-nums uppercase tracking-[0.05em]"
-                  style={{ color: isCurrent ? "var(--m-text)" : "var(--muted-fg)" }}
-                >
-                  T{w.week}
-                </span>
-                <span className="text-[9px] tabular-nums" style={{ color: "var(--muted-fg)", opacity: 0.6 }}>
-                  {dateLabel}
-                </span>
+            <div key={week.week} className="course-list-row">
+              <div className="course-week-index" data-current={current ? "true" : "false"}>
+                <span>T{week.week}</span>
+                <small>{formatShortDate(monday)}</small>
               </div>
-              <div className="flex-1 min-w-0 py-2">
-                <p
-                  className="text-[12px] leading-snug truncate"
-                  style={{ color: isCurrent ? "var(--foreground)" : "var(--muted-fg)", fontWeight: isCurrent ? 600 : 400 }}
-                >
-                  {topic ?? "(nema podataka)"}
+              <div className="min-w-0 flex-1">
+                <p className="course-row-title" data-current={current ? "true" : "false"}>
+                  {topic || "Nema podataka"}
                 </p>
               </div>
-              {isCurrent && (
-                <span
-                  className="shrink-0 text-[9px] font-bold uppercase tracking-[0.08em] px-1.5 py-0.5 rounded"
-                  style={{ background: "color-mix(in srgb, var(--m-accent) 20%, transparent)", color: "var(--m-text)" }}
-                >
-                  Sada
-                </span>
-              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function PrepChecklist({
+  event,
+  curr,
+  allDates,
+  progressVersion,
+  onToggleTopic,
+}: {
+  event: CriticalDate;
+  curr: CurriculumEntry;
+  allDates: CriticalDate[];
+  progressVersion: number;
+  onToggleTopic: (subjectId: string, type: string, week: number, topicKey: string) => void;
+}) {
+  const topics = getTestTopics(curr, event, allDates);
+  const total = countCheckableItems(topics);
+  const progress = getProgress(event.subjectId, event.type, event.week);
+  const completion = getCompletion(event.subjectId, event.type, event.week, total);
+  const color = EVENT_COLOR[event.type];
+  void progressVersion;
+
+  if (!TEST_TYPES.has(event.type)) {
+    return (
+      <p className="px-4 pb-4 text-[12px] text-muted-fg">
+        Za ovaj tip roka nema pripremne liste.
+      </p>
+    );
+  }
+
+  if (topics.length === 0 || total === 0) {
+    return (
+      <p className="px-4 pb-4 text-[12px] text-muted-fg">
+        Nema dovoljno podataka za pripremu.
+      </p>
+    );
+  }
+
+  return (
+    <div className="px-4 pb-4">
+      <div className="course-prep-summary">
+        <span>{completion.done}/{total} obradeno</span>
+        <strong>{Math.round((completion.done / total) * 100)}%</strong>
+      </div>
+
+      <div className="mt-3 space-y-3">
+        {topics.map((topic) => {
+          if (topic.isHoliday) {
+            return (
+              <div key={topic.week} className="course-holiday-row">
+                T{topic.week} - praznik
+              </div>
+            );
+          }
+
+          const { monday, friday } = getWeekDates(topic.week);
+          const dateRange = `${formatShortDate(monday)}-${formatShortDate(friday)}`;
+          const lectureKey = `w${topic.week}:p`;
+          const exerciseKey = `w${topic.week}:v`;
+          const lectureChecked = !!progress.checked[lectureKey];
+          const exerciseChecked = !!progress.checked[exerciseKey];
+
+          return (
+            <div key={topic.week} className="course-prep-week" style={{ "--course-accent": color } as CSSProperties}>
+              <div className="course-prep-week-head">
+                <span>T{topic.week}</span>
+                <small>{dateRange}</small>
+              </div>
+              <PrepRow
+                checked={lectureChecked}
+                color={color}
+                text={topic.lecture}
+                onChange={() => onToggleTopic(event.subjectId, event.type, event.week, lectureKey)}
+              />
+              <PrepRow
+                checked={exerciseChecked}
+                color={color}
+                text={topic.exercise}
+                onChange={() => onToggleTopic(event.subjectId, event.type, event.week, exerciseKey)}
+              />
             </div>
           );
         })}
@@ -202,327 +285,106 @@ function WeekStrip({
   );
 }
 
-function ResourceRow({ link }: { link: ResourceLink }) {
+function PrepRow({
+  checked,
+  color,
+  text,
+  onChange,
+}: {
+  checked: boolean;
+  color: string;
+  text: string;
+  onChange: () => void;
+}) {
   return (
-    <a
-      href={link.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-3 px-3 t-fast transition-colors"
-      style={{
-        minHeight: 48,
-        color: "var(--foreground)",
-        textDecoration: "none",
-      }}
+    <label
+      className="course-prep-row prep-check"
+      data-checked={checked ? "true" : "false"}
+      style={{ "--check-color": color } as CSSProperties}
     >
-      <svg
-        width="14" height="14" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-        className="shrink-0" style={{ color: "var(--e-text)", opacity: 0.7 }}
-        aria-hidden="true"
-      >
-        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-        <polyline points="15 3 21 3 21 9" />
-        <line x1="10" y1="14" x2="21" y2="3" />
-      </svg>
-      <span className="text-[13px] leading-snug flex-1 min-w-0">{link.label}</span>
-      <svg
-        width="10" height="10" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-        className="shrink-0 opacity-30" aria-hidden="true"
-      >
-        <polyline points="9 18 15 12 9 6" />
-      </svg>
-    </a>
+      <input type="checkbox" checked={checked} onChange={onChange} />
+      <span className="prep-check-box" aria-hidden="true">
+        <CheckSvg color={color} />
+      </span>
+      <span className="course-prep-text">{text}</span>
+    </label>
   );
 }
 
-function TestCard({
-  cd,
+function AssessmentCard({
+  event,
   curr,
   allDates,
-  onToggleTopic,
+  open,
+  onOpen,
   progressVersion,
+  onToggleTopic,
 }: {
-  cd: CriticalDate;
+  event: CriticalDate;
   curr: CurriculumEntry;
   allDates: CriticalDate[];
-  onToggleTopic: (subjectId: string, type: string, week: number, topicKey: string) => void;
+  open: boolean;
+  onOpen: () => void;
   progressVersion: number;
+  onToggleTopic: (subjectId: string, type: string, week: number, topicKey: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const days = cd.date ? daysUntil(cd.date) : null;
-  const isPast = days !== null && days < 0;
-  const isSoon = days !== null && days >= 0 && days <= 7;
-  const eventColor = EVENT_COLOR[cd.type];
-  const isTest = TEST_TYPES.has(cd.type);
-
-  const topics = isTest ? getTestTopics(curr, cd, allDates) : [];
-  const total = countCheckableItems(topics);
-  const completion = isTest && total > 0
-    ? getCompletion(cd.subjectId, cd.type, cd.week, total)
-    : null;
-  void progressVersion;
-
-  const pct = completion && total > 0 ? (completion.done / total) * 100 : 0;
-  const progress = isTest ? getProgress(cd.subjectId, cd.type, cd.week) : null;
-
-  // Find points for this component from grading
-  const label = TYPE_LABEL[cd.type].toLowerCase();
-  let points: number | null = null;
-  for (const g of curr.grading) {
-    if (g.component.toLowerCase().includes(label)) { points = g.maxPoints; break; }
-  }
+  const color = EVENT_COLOR[event.type];
+  const days = event.date ? daysUntil(event.date) : null;
+  const points = eventPoints(event, curr);
+  const total = TEST_TYPES.has(event.type) ? countCheckableItems(getTestTopics(curr, event, allDates)) : 0;
+  const completion = total > 0 ? getCompletion(event.subjectId, event.type, event.week, total) : null;
+  const pct = completion && total > 0 ? Math.round((completion.done / total) * 100) : null;
+  const disabled = !TEST_TYPES.has(event.type);
 
   return (
-    <div style={{ opacity: isPast ? 0.4 : 1 }}>
-      {/* Row */}
+    <div className="course-assessment" style={{ "--course-accent": color } as CSSProperties}>
       <button
-        onClick={() => isTest && setOpen(v => !v)}
-        className="w-full text-left flex items-center gap-3 px-3"
-        style={{
-          minHeight: 52,
-          borderLeft: `3px solid ${eventColor}`,
-          background: isSoon
-            ? "color-mix(in srgb, var(--u-critical-tint) 80%, transparent)"
-            : "var(--muted)",
-          cursor: isTest ? "pointer" : "default",
-          WebkitTapHighlightColor: "transparent",
-        }}
-        disabled={!isTest}
+        onClick={onOpen}
+        disabled={disabled}
+        className="course-assessment-button"
+        style={{ cursor: disabled ? "default" : "pointer" }}
       >
-        {/* Type + date */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2">
-            <span className="text-[13px] font-semibold text-foreground">{TYPE_LABEL[cd.type]}</span>
-            {cd.date && (
-              <span className="text-[11px] text-muted-fg tabular-nums">{formatHrDate(cd.date)}</span>
-            )}
-            {!cd.date && (
-              <span className="text-[11px] text-muted-fg">T{cd.week}</span>
-            )}
+        <span className="course-assessment-dot" aria-hidden="true" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="course-assessment-type" style={{ color }}>
+              {TYPE_LABEL[event.type]}
+            </span>
+            {event.date && <span className="course-assessment-date">{formatHrDate(event.date)}</span>}
           </div>
-          {/* Progress bar underneath if test */}
-          {isTest && completion && total > 0 && (
-            <div className="mt-1 flex items-center gap-2">
-              <div className="flex-1 h-0.5 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
-                <div
-                  style={{
-                    width: `${pct}%`,
-                    height: "100%",
-                    background: pct === 100 ? "var(--m-accent)" : eventColor,
-                    borderRadius: 9999,
-                    transition: "width 200ms var(--ease-out-expo)",
-                  }}
-                />
-              </div>
-              <span className="text-[10px] tabular-nums shrink-0" style={{ color: "var(--muted-fg)" }}>
-                {completion.done}/{total}
-              </span>
+          <p className="course-assessment-label">
+            {event.label || TYPE_LABEL[event.type]}
+          </p>
+          {completion && pct !== null && (
+            <div className="course-progress-line">
+              <span style={{ width: `${pct}%`, background: color }} />
             </div>
           )}
         </div>
 
-        {/* Right: countdown + chevron */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="course-assessment-meta">
           {days !== null && days >= 0 && (
-            <span
-              className="text-[11px] font-bold tabular-nums px-2 py-1 rounded-md"
-              style={{
-                color: isSoon ? "var(--u-critical)" : eventColor,
-                background: isSoon
-                  ? "color-mix(in srgb, var(--u-critical) 12%, transparent)"
-                  : "color-mix(in srgb, var(--border) 80%, transparent)",
-              }}
-            >
+            <span className="course-assessment-days" style={{ color: days <= 7 ? color : undefined }}>
               {daysLabel(days)}
             </span>
           )}
-          {isTest && (
-            <span
-              className="text-muted-fg"
-              style={{
-                fontSize: 11,
-                transform: open ? "rotate(180deg)" : "rotate(0deg)",
-                transition: "transform 150ms var(--ease-out-expo)",
-                display: "inline-block",
-              }}
-            >
-              ▾
-            </span>
-          )}
+          {points !== null && <span className="course-points">{points} bod.</span>}
+          {!disabled && <Chevron open={open} />}
         </div>
       </button>
 
-      {/* Expanded checklist */}
-      {open && isTest && progress !== null && (
-        <div
-          className="px-3 pt-3 pb-2"
-          style={{
-            background: "color-mix(in srgb, var(--card) 90%, transparent)",
-            borderLeft: `3px solid color-mix(in srgb, ${eventColor} 40%, transparent)`,
-            animation: "row-in 150ms var(--ease-out-expo) both",
-          }}
-        >
-          {/* Stats row */}
-          {completion && total > 0 && (
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-baseline gap-2">
-                {points !== null && (
-                  <span className="text-[13px] font-bold tabular-nums" style={{ color: eventColor }}>
-                    {points}
-                    <span className="text-[10px] font-semibold ml-0.5 text-muted-fg">bod.</span>
-                  </span>
-                )}
-                <span className="text-[11px] tabular-nums text-muted-fg">
-                  {completion.done}/{total} obrađeno
-                </span>
-              </div>
-              <span
-                className="text-[10px] font-bold tabular-nums px-2 py-0.5 rounded-full"
-                style={{
-                  background: pct === 100
-                    ? "color-mix(in srgb, var(--m-accent) 20%, transparent)"
-                    : `color-mix(in srgb, ${eventColor} 12%, transparent)`,
-                  color: pct === 100 ? "var(--m-text)" : eventColor,
-                }}
-              >
-                {Math.round(pct)}%
-              </span>
-            </div>
-          )}
-
-          {/* Segmented track */}
-          {completion && total > 0 && total <= 20 && (
-            <div className="flex gap-0.5 mb-3" style={{ height: 3 }}>
-              {Array.from({ length: total }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex-1 rounded-sm"
-                  style={{
-                    background: i < completion.done ? eventColor : "var(--border)",
-                    transition: `background 200ms ${i * 30}ms`,
-                    opacity: i < completion.done ? 1 : 0.4,
-                  }}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Topic checklist */}
-          <div className="space-y-2">
-            {topics.map(topic => {
-              if (topic.isHoliday) {
-                return (
-                  <div key={topic.week} className="flex items-center gap-2 py-1 opacity-25">
-                    <div className="flex-1" style={{ height: 1, background: "var(--border-subtle)" }} />
-                    <span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-fg">
-                      T{topic.week} · praznik
-                    </span>
-                    <div className="flex-1" style={{ height: 1, background: "var(--border-subtle)" }} />
-                  </div>
-                );
-              }
-
-              const { monday, friday } = getWeekDates(topic.week);
-              const dateRange = `${formatShortDate(monday)}–${formatShortDate(friday)}`;
-              const lectureKey = `w${topic.week}:p`;
-              const exerciseKey = `w${topic.week}:v`;
-              const lectureChecked = !!progress.checked[lectureKey];
-              const exerciseChecked = !!progress.checked[exerciseKey];
-
-              return (
-                <div
-                  key={topic.week}
-                  style={{
-                    paddingLeft: 10,
-                    borderLeft: `2px solid color-mix(in srgb, ${eventColor} 25%, transparent)`,
-                  }}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className="text-[10px] font-bold tabular-nums tracking-[0.06em] uppercase"
-                      style={{ color: eventColor, opacity: 0.7 }}
-                    >
-                      T{topic.week}
-                    </span>
-                    <span className="text-[9px] tabular-nums text-muted-fg">{dateRange}</span>
-                  </div>
-
-                  <label
-                    className="prep-check"
-                    data-checked={lectureChecked ? "true" : "false"}
-                    style={{
-                      opacity: lectureChecked ? 0.45 : 1,
-                      transition: "opacity 200ms var(--ease-out-expo)",
-                      "--check-color": eventColor,
-                    } as React.CSSProperties}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={lectureChecked}
-                      onChange={() => onToggleTopic(cd.subjectId, cd.type, cd.week, lectureKey)}
-                    />
-                    <span className="prep-check-box" aria-hidden="true">
-                      <CheckSvg color={eventColor} />
-                    </span>
-                    <span className="flex-1 text-[12px] leading-snug">
-                      <span
-                        className="inline-block text-[9px] font-bold uppercase tracking-[0.1em] mr-1.5 px-1 py-px rounded"
-                        style={{ background: "color-mix(in srgb, var(--m-accent) 15%, transparent)", color: "var(--m-text)", verticalAlign: "1px" }}
-                      >P</span>
-                      <span style={{
-                        textDecoration: lectureChecked ? "line-through" : "none",
-                        textDecorationColor: "var(--muted-fg)",
-                        color: lectureChecked ? "var(--muted-fg)" : "var(--foreground)",
-                      }}>{topic.lecture}</span>
-                    </span>
-                  </label>
-
-                  <label
-                    className="prep-check"
-                    data-checked={exerciseChecked ? "true" : "false"}
-                    style={{
-                      opacity: exerciseChecked ? 0.45 : 1,
-                      transition: "opacity 200ms var(--ease-out-expo)",
-                      "--check-color": eventColor,
-                    } as React.CSSProperties}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={exerciseChecked}
-                      onChange={() => onToggleTopic(cd.subjectId, cd.type, cd.week, exerciseKey)}
-                    />
-                    <span className="prep-check-box" aria-hidden="true">
-                      <CheckSvg color={eventColor} />
-                    </span>
-                    <span className="flex-1 text-[12px] leading-snug">
-                      <span
-                        className="inline-block text-[9px] font-bold uppercase tracking-[0.1em] mr-1.5 px-1 py-px rounded"
-                        style={{ background: "color-mix(in srgb, var(--e-accent) 15%, transparent)", color: "var(--e-text)", verticalAlign: "1px" }}
-                      >V</span>
-                      <span style={{
-                        textDecoration: exerciseChecked ? "line-through" : "none",
-                        textDecorationColor: "var(--muted-fg)",
-                        color: exerciseChecked ? "var(--muted-fg)" : "var(--foreground)",
-                      }}>{topic.exercise}</span>
-                    </span>
-                  </label>
-                </div>
-              );
-            })}
-
-            {topics.length === 0 && (
-              <p className="text-[11px] text-muted-fg py-1">Nema tema za prikaz.</p>
-            )}
-          </div>
-        </div>
+      {open && (
+        <PrepChecklist
+          event={event}
+          curr={curr}
+          allDates={allDates}
+          progressVersion={progressVersion}
+          onToggleTopic={onToggleTopic}
+        />
       )}
     </div>
   );
 }
-
-// ── Main component ─────────────────────────────────────────────────────────
 
 export function CourseModal({
   slot,
@@ -537,346 +399,176 @@ export function CourseModal({
   const curr = curriculum[curriculumId] as CurriculumEntry | undefined;
   const currentWeek = getCurrentWeek();
   const courseColor = getCourseColor(effectiveSubjectId);
-
-  // Map legacy tab names to new 2-tab system
-  const resolveTab = (t: string | undefined): Tab => {
-    if (t === "rokovi") return "rokovi";
-    return "pregled";
-  };
-  const [tab, setTab] = useState<Tab>(resolveTab(initialTab));
-  const [progressVersion, setProgressVersion] = useState(0);
-
-  useKeyboard("Escape", onClose);
-
-  useEffect(() => {
-    if (initialTestExpand) setTab("rokovi");
-  }, [initialTestExpand]);
-
-  const criticalDates = curr
-    ? extractCriticalDates({ [curriculumId]: curr })
-    : [];
-  const allDates = extractCriticalDates(curriculum as Record<string, CurriculumEntry>);
-  const nonIspit = criticalDates.filter(d => d.type !== "ispit");
-  const ispiti = criticalDates.filter(d => d.type === "ispit");
-
-  const upcoming = nonIspit.filter(d => d.date && daysUntil(d.date) >= 0);
-  const mostUrgent = [...upcoming].sort((a, b) => {
-    const da = a.date ? daysUntil(a.date) : 999;
-    const db = b.date ? daysUntil(b.date) : 999;
-    return da - db;
-  })[0];
-
   const slotType: "P" | "V" = slot?.type === "V" ? "V" : "P";
+  const [progressVersion, setProgressVersion] = useState(0);
+  const [tab, setTab] = useState<Tab>(initialTestExpand || initialTab === "rokovi" ? "rokovi" : "pregled");
+  const [openEventKey, setOpenEventKey] = useState<string | null>(initialTestExpand ? eventKey(initialTestExpand) : null);
+
+  const criticalDates = useMemo(
+    () => curr ? extractCriticalDates({ [curriculumId]: curr }) : [],
+    [curr, curriculumId]
+  );
+  const allDates = useMemo(
+    () => extractCriticalDates(curriculum as Record<string, CurriculumEntry>),
+    []
+  );
+
+  const assessments = useMemo(
+    () => criticalDates
+      .filter((event) => event.type !== "ispit")
+      .sort((a, b) => {
+        const aDate = a.date?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        const bDate = b.date?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        return aDate - bDate;
+      }),
+    [criticalDates]
+  );
+
+  const nextEvent = assessments.find((event) => event.date && daysUntil(event.date) >= 0);
   const currentTopic = curr?.weeks[currentWeek - 1]
     ? (slotType === "P" ? curr.weeks[currentWeek - 1].lecture : curr.weeks[currentWeek - 1].exercise)
     : null;
 
-  const subjectResources = resources[effectiveSubjectId] ?? {};
-  const currentWeekLinks: ResourceLink[] = subjectResources[currentWeek] ?? [];
-
   const handleToggleTopic = (subjectId: string, type: string, week: number, topicKey: string) => {
     toggleTopicStorage(subjectId, type, week, topicKey);
-    setProgressVersion(v => v + 1);
+    setProgressVersion((value) => value + 1);
   };
 
-  const TABS: { id: Tab; label: string }[] = [
-    { id: "pregled", label: "Pregled" },
-    { id: "rokovi", label: "Rokovi" },
-  ];
-
   return (
-    <>
-      <div className="modal-backdrop" onClick={onClose} />
-      <div className="modal-content" style={{ display: "flex", flexDirection: "column" }}>
+    <Dialog.Root open onOpenChange={(open) => !open && onClose()}>
+      <Dialog.Portal>
+      <Dialog.Overlay className="modal-backdrop" />
+      <Dialog.Content className="modal-content course-sheet" style={{ "--course-accent": courseColor.accent } as CSSProperties}>
+        <div className="course-sheet-handle" />
 
-        {/* Drag handle — mobile only, colored per course */}
-        <div className="flex justify-center pt-3 pb-1 md:hidden">
-          <div
-            className="w-10 h-1 rounded-full"
-            style={{ background: courseColor.accent, opacity: 0.5 }}
-          />
-        </div>
-
-        {/* ── Header ── */}
-        <div
-          className="px-5 pt-3 pb-0"
-          style={{ borderBottom: "1px solid var(--border)", flexShrink: 0 }}
-        >
-          {/* Course name + urgency pill */}
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <h2
-              className="text-[16px] font-bold text-foreground leading-snug"
-              style={{ letterSpacing: "-0.01em" }}
-            >
-              {subj?.full_name ?? effectiveSubjectId}
-            </h2>
-            {mostUrgent && (
-              <span
-                className="shrink-0 text-[10px] font-bold px-2 py-1 rounded-full"
-                style={{
-                  background: `color-mix(in srgb, ${EVENT_COLOR[mostUrgent.type]} 15%, transparent)`,
-                  color: EVENT_COLOR[mostUrgent.type],
-                  border: `1px solid color-mix(in srgb, ${EVENT_COLOR[mostUrgent.type]} 35%, transparent)`,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {mostUrgent.date
-                  ? `${TYPE_LABEL[mostUrgent.type]} ${daysLabel(daysUntil(mostUrgent.date))}`
-                  : TYPE_LABEL[mostUrgent.type]}
-              </span>
-            )}
+        <header className="course-header">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 pr-2">
+              <p className="course-kicker">{subj?.short_name ?? effectiveSubjectId}</p>
+              <Dialog.Title className="course-title">
+                {subj?.full_name ?? effectiveSubjectId}
+              </Dialog.Title>
+            </div>
+            <Dialog.Close className="course-close" type="button" aria-label="Zatvori">
+              <X size={15} strokeWidth={2.2} />
+            </Dialog.Close>
           </div>
 
-          {/* Meta chips — slot context */}
-          {slot && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-bold tabular-nums bg-muted text-foreground">
-                {slot.start}&ndash;{slot.end}
+          {nextEvent?.date && (
+            <div className="mt-3">
+              <span
+                className="course-countdown course-header-pill"
+                style={{
+                  color: EVENT_COLOR[nextEvent.type],
+                  background: `color-mix(in srgb, ${EVENT_COLOR[nextEvent.type]} 14%, transparent)`,
+                }}
+              >
+                {TYPE_LABEL[nextEvent.type]} {daysLabel(daysUntil(nextEvent.date))}
               </span>
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-medium bg-muted text-muted-fg">
-                {slotType === "P" ? "Predavanje" : "Vježbe"}
-              </span>
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-medium bg-muted text-muted-fg">
-                {slot.room}
-              </span>
-              {slot.prof && (
-                <span className="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-medium bg-muted text-muted-fg truncate max-w-[160px]">
-                  {slot.prof}
-                </span>
-              )}
             </div>
           )}
 
-          {/* 2-tab switcher */}
-          <div className="flex gap-0">
-            {TABS.map(t => (
+          {slot && (
+            <p className="course-meta-line">
+              <strong>{slot.start}-{slot.end}</strong>
+              {" · "}{slotType === "P" ? "Predavanje" : "Vježbe"}
+              {slot.room && !slot.online && <>{" · "}{slot.room}</>}
+              {slot.prof && <>{" · "}{slot.prof}</>}
+            </p>
+          )}
+
+          <div className="course-segmented" role="tablist" aria-label="Kolegij">
+            {(["pregled", "rokovi"] as const).map((item) => (
               <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className="px-4 t-fast transition-colors"
-                style={{
-                  height: 40,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  letterSpacing: "0.03em",
-                  color: tab === t.id ? "var(--foreground)" : "var(--muted-fg)",
-                  boxShadow: tab === t.id
-                    ? `inset 0 -2px 0 0 ${courseColor.accent}`
-                    : undefined,
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  WebkitTapHighlightColor: "transparent",
-                }}
+                key={item}
+                type="button"
+                role="tab"
+                aria-selected={tab === item}
+                data-active={tab === item ? "true" : "false"}
+                onClick={() => setTab(item)}
               >
-                {t.label}
+                {item === "pregled" ? "Pregled" : "Rokovi"}
               </button>
             ))}
           </div>
-        </div>
+        </header>
 
-        {/* ── Scrollable body ── */}
-        <div className="overflow-y-auto flex-1" style={{ overscrollBehavior: "contain" }}>
+        <main className="course-body">
+          {!curr ? (
+            <div className="null-state">
+              <p>Nema podataka za ovaj kolegij.</p>
+            </div>
+          ) : tab === "pregled" ? (
+            <div className="course-stack">
+              <section className="course-topic-panel">
+                <div className="course-hero-meta">
+                  <span>T{currentWeek}</span>
+                  <span>{slotType === "P" ? "Predavanje" : "Vježbe"}</span>
+                </div>
+                <h3>{currentTopic || "Nema teme za ovaj tjedan."}</h3>
+              </section>
 
-          {/* ── PREGLED tab ── */}
-          {tab === "pregled" && (
-            <div className="px-5 py-4 space-y-5">
-
-              {/* Hero: current topic */}
-              {curr && (
-                <div
-                  className="rounded-xl p-4"
-                  style={{
-                    background: `color-mix(in srgb, ${courseColor.tint} 90%, var(--muted) 10%)`,
-                    border: `1px solid color-mix(in srgb, ${courseColor.accent} 30%, transparent)`,
-                  }}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span
-                      className="text-[9px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded"
-                      style={{ background: `color-mix(in srgb, ${courseColor.accent} 20%, transparent)`, color: courseColor.text }}
-                    >
-                      T{currentWeek}
-                    </span>
-                    <span className="text-[10px] text-muted-fg font-medium">
-                      {slotType === "P" ? "Predavanje" : "Vježbe"}
-                    </span>
-                  </div>
-                  {currentTopic ? (
-                    <p className="text-[15px] font-semibold text-foreground leading-snug">
-                      {currentTopic}
-                    </p>
-                  ) : (
-                    <p className="text-[13px] text-muted-fg">Nema podataka za ovaj tjedan.</p>
+              <GradingSummary curr={curr} accent={courseColor.accent} />
+              <WeekTimeline curr={curr} currentWeek={currentWeek} slotType={slotType} />
+            </div>
+          ) : (
+            <div className="course-stack">
+              <section>
+                <SectionTitle>Provjere i predaje</SectionTitle>
+                <div className="course-assessment-list">
+                  {assessments.length > 0 ? assessments.map((event) => {
+                    const key = eventKey(event);
+                    return (
+                      <AssessmentCard
+                        key={key}
+                        event={event}
+                        curr={curr}
+                        allDates={allDates}
+                        open={openEventKey === key}
+                        onOpen={() => setOpenEventKey(openEventKey === key ? null : key)}
+                        progressVersion={progressVersion}
+                        onToggleTopic={handleToggleTopic}
+                      />
+                    );
+                  }) : (
+                    <div className="null-state">
+                      <p>Nema rokova za ovaj kolegij.</p>
+                    </div>
                   )}
                 </div>
-              )}
+              </section>
 
-              {/* Grading breakdown — collapsible bar */}
-              {curr && curr.grading.length > 0 && (
-                <GradingBar grading={curr.grading} />
-              )}
-
-              {/* Next 2 weeks strip */}
-              {curr && (
-                <WeekStrip curr={curr} currentWeek={currentWeek} slotType={slotType} />
-              )}
-
-              {/* Current week resources */}
-              {currentWeekLinks.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-fg mb-2">
-                    Resursi ovog tjedna
-                  </p>
-                  <div
-                    className="rounded-lg overflow-hidden divide-y"
-                    style={{
-                      background: "var(--muted)",
-                      borderColor: "var(--border-subtle)",
-                      border: `1px solid color-mix(in srgb, ${courseColor.accent} 25%, transparent)`,
-                    }}
-                  >
-                    {currentWeekLinks.map((link, i) => (
-                      <ResourceRow key={i} link={link} />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {!curr && (
-                <div className="null-state">
-                  <p>Nema podataka za ovaj kolegij.</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── ROKOVI tab ── */}
-          {tab === "rokovi" && (
-            <div className="py-3">
-
-              {/* Provjere */}
-              {nonIspit.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-fg px-5 mb-2">
-                    Provjere
-                  </p>
-                  <div
-                    className="overflow-hidden"
-                    style={{ borderTop: "1px solid var(--border-subtle)", borderBottom: "1px solid var(--border-subtle)" }}
-                  >
-                    <div className="space-y-0 divide-y" style={{ borderColor: "var(--border-subtle)" }}>
-                      {nonIspit.map((cd, i) => curr ? (
-                        <TestCard
-                          key={i}
-                          cd={cd}
-                          curr={curr}
-                          allDates={allDates}
-                          onToggleTopic={handleToggleTopic}
-                          progressVersion={progressVersion}
-                        />
-                      ) : null)}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Ispitni rokovi */}
-              {curr && curr.exams.length > 0 && (
-                <div className="px-5">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-fg mb-2">
-                    Ispitni rokovi
-                  </p>
-                  <div className="rounded-lg overflow-hidden space-y-0" style={{ background: "var(--muted)" }}>
-                    {curr.exams.map((e, i) => {
-                      const dateObj = ispiti.find(d => d.label.includes(e.replace(".", "")))?.date ?? null;
+              {curr.exams.length > 0 && (
+                <section>
+                  <SectionTitle>Ispitni rokovi</SectionTitle>
+                  <div className="course-exam-list">
+                    {curr.exams.map((date) => {
+                      const parsed = date.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+                      const dateObj = parsed ? new Date(Number(parsed[3]), Number(parsed[2]) - 1, Number(parsed[1])) : null;
                       const days = dateObj ? daysUntil(dateObj) : null;
-                      const isPast = days !== null && days < 0;
                       return (
-                        <div
-                          key={i}
-                          className="flex items-center justify-between px-3"
-                          style={{
-                            minHeight: 48,
-                            borderBottom: i < curr.exams.length - 1 ? "1px solid var(--border-subtle)" : undefined,
-                            opacity: isPast ? 0.35 : 1,
-                          }}
-                        >
-                          <span className="text-[13px] text-foreground tabular-nums">{e}</span>
-                          {days !== null && days >= 0 && (
-                            <span className="text-[11px] text-muted-fg tabular-nums">{daysLabel(days)}</span>
-                          )}
-                          {isPast && (
-                            <span className="text-[10px] text-muted-fg">prošlo</span>
+                        <div key={date} className="course-list-row">
+                          <div className="course-week-index">
+                            <span>Ispit</span>
+                          </div>
+                          <p className="course-row-title">{date}</p>
+                          {days !== null && (
+                            <span className="text-[11px] font-semibold tabular-nums text-muted-fg">
+                              {daysLabel(days)}
+                            </span>
                           )}
                         </div>
                       );
                     })}
                   </div>
-                </div>
-              )}
-
-              {nonIspit.length === 0 && (!curr || curr.exams.length === 0) && (
-                <div className="null-state">
-                  <p>Nema rokova za ovaj kolegij.</p>
-                </div>
+                </section>
               )}
             </div>
           )}
+        </main>
 
-          {/* Bottom padding so content clears the close button */}
-          <div style={{ height: 8 }} />
-        </div>
-
-        {/* ── Footer ── */}
-        {/* Mobile close row */}
-        <div
-          className="md:hidden px-5 py-3 shrink-0"
-          style={{ borderTop: "1px solid var(--border-subtle)" }}
-        >
-          <button
-            onClick={onClose}
-            className="w-full t-fast transition-colors"
-            style={{
-              height: 48,
-              fontSize: 13,
-              fontWeight: 600,
-              color: "var(--muted-fg)",
-              background: "var(--muted)",
-              borderRadius: 10,
-              border: "none",
-              cursor: "pointer",
-              WebkitTapHighlightColor: "transparent",
-            }}
-          >
-            Zatvori
-          </button>
-        </div>
-
-        {/* Desktop close X */}
-        <div className="hidden md:block absolute top-3 right-3">
-          <button
-            onClick={onClose}
-            style={{
-              width: 32,
-              height: 32,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 8,
-              border: "none",
-              background: "none",
-              color: "var(--muted-fg)",
-              cursor: "pointer",
-            }}
-            className="hover:bg-muted hover:text-foreground t-fast transition-colors"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </>
+      </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

@@ -122,9 +122,6 @@ export function useTemporalContext(): TemporalContext {
   const [context, setContext] = useState<TemporalContext>(buildContext);
 
   useEffect(() => {
-    // Refresh immediately in case SSR snapshot is stale
-    setContext(buildContext());
-
     const interval = setInterval(() => {
       setContext(buildContext());
     }, 60_000);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 
 interface DropdownProps {
   options: { value: string; label: string }[];
@@ -16,7 +16,10 @@ export function Dropdown({ options, value, onChange, placeholder = "Sve" }: Drop
   const listRef = useRef<HTMLUListElement>(null);
 
   // All items including the clear option
-  const allItems = [{ value: null as string | null, label: placeholder }, ...options.map(o => ({ value: o.value as string | null, label: o.label }))];
+  const allItems = useMemo(
+    () => [{ value: null as string | null, label: placeholder }, ...options.map(o => ({ value: o.value as string | null, label: o.label }))],
+    [options, placeholder]
+  );
 
   const selectedLabel = value !== null ? options.find(o => o.value === value)?.label : null;
 

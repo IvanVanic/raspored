@@ -67,7 +67,7 @@
       "slots": [
         { "day": "Utorak", "start": "12:15", "end": "13:45", "type": "P", "group": null, "prof": "Maksimović", "room": "028" },
         { "day": "Utorak", "start": "16:00", "end": "17:30", "type": "V", "group": "G1", "prof": "Zubović Žutolija", "room": "028" },
-        { "day": "Utorak", "start": "17:45", "end": "19:15", "type": "V", "group": "G2", "prof": "Zubović Žutolija", "room": "028" }
+        { "day": "Utorak", "start": "18:00", "end": "19:30", "type": "V", "group": "G2", "prof": "Zubović Žutolija", "room": "028" }
       ],
       "assigned_group": "G2"
     },
@@ -138,7 +138,7 @@
       { "subject_id": "upw",   "start": "10:00", "end": "11:30", "type": "P", "group": null, "prof": "Načinović Prskalo",  "room": "028", "status": "M" },
       { "subject_id": "ovis",  "start": "12:15", "end": "13:45", "type": "P", "group": null, "prof": "Maksimović",         "room": "028", "status": "M" },
       { "subject_id": "oi",    "start": "14:00", "end": "15:30", "type": "V", "group": "G2", "prof": "Franković Lučić",    "room": "359", "status": "M" },
-      { "subject_id": "ovis",  "start": "17:45", "end": "19:15", "type": "V", "group": "G2", "prof": "Zubović Žutolija",   "room": "028", "status": "M" }
+      { "subject_id": "ovis",  "start": "18:00", "end": "19:30", "type": "V", "group": "G2", "prof": "Zubović Žutolija",   "room": "028", "status": "M" }
     ],
     "Srijeda": [
       { "subject_id": "uasp",  "start": "08:15", "end": "09:45", "type": "P", "group": null, "prof": "Matetić / Brkić Bakarić", "room": "028", "status": "E" },

@@ -1,6 +1,6 @@
 import type { EventType } from "@/data/types";
 
-export const TEST_TYPES: Set<EventType> = new Set(["kolokvij", "ispit", "kontrolna", "kviz"]);
+export const TEST_TYPES: Set<EventType> = new Set(["kolokvij", "ispit", "kontrolna", "kviz", "predrok"]);
 export const TYPE_LABEL: Record<EventType, string> = {
   kolokvij: "Kolokvij",
   obrana: "Obrana",
@@ -11,6 +11,7 @@ export const TYPE_LABEL: Record<EventType, string> = {
   zadavanje: "Zadavanje",
   domaca_zadaca: "Domaća zadaća",
   kontrolna: "Kontrolna zadaća",
+  predrok: "Predrok",
 };
 
 export const TYPE_CATEGORY: Record<EventType, "exam" | "assignment" | "lab"> = {
@@ -23,6 +24,7 @@ export const TYPE_CATEGORY: Record<EventType, "exam" | "assignment" | "lab"> = {
   zadavanje: "assignment",
   domaca_zadaca: "assignment",
   kontrolna: "exam",
+  predrok: "exam",
 };
 
 export const EVENT_COLOR: Record<EventType, string> = {
@@ -35,6 +37,7 @@ export const EVENT_COLOR: Record<EventType, string> = {
   zadavanje: "var(--muted-fg)",
   domaca_zadaca: "var(--e-accent)",
   kontrolna: "var(--u-critical)",
+  predrok: "var(--u-critical)",
 };
 
 /** Per-course accent colors for schedule cards and UI consistency. */

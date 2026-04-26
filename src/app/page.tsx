@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { data } from "@/data/schedule";
 import type { Slot, CriticalDate } from "@/data/types";
 import { useTemporalContext } from "@/hooks/useTemporalContext";
@@ -24,19 +24,14 @@ export default function Home() {
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [testExpand, setTestExpand] = useState<{ subjectId: string; event: CriticalDate } | null>(null);
 
-  // Sync dayIdx and viewingWeek with correct values after hydration
-  const hydrated = useRef(false);
-  useEffect(() => {
-    if (!hydrated.current) {
-      hydrated.current = true;
-      setDayIdx(temporal.smartDefaultDay);
-      setViewingWeek(temporal.smartDefaultWeek);
-    }
-  }, [temporal.smartDefaultDay, temporal.smartDefaultWeek]);
-
   const onTestTap = (event: CriticalDate) => {
     setTestExpand({ subjectId: event.subjectId, event });
     setModalSlot(null); // clear slot-based modal
+  };
+
+  const onTimelineNavigate = () => {
+    setView("kalendar");
+    setTimelineOpen(false);
   };
 
   const now = new Date();
@@ -81,7 +76,7 @@ export default function Home() {
         <CourseModal slot={modalSlot} onClose={() => setModalSlot(null)} />
       )}
 
-      {/* Test detail modal (from CalendarView / SemesterTimeline) */}
+      {/* Test detail modal (from CalendarView) */}
       {testExpand && !modalSlot && (
         <CourseModal
           slot={null}
@@ -97,7 +92,7 @@ export default function Home() {
         currentWeek={temporal.currentWeek}
         isOpen={timelineOpen}
         onClose={() => setTimelineOpen(false)}
-        onTestTap={onTestTap}
+        onNavigateToDate={onTimelineNavigate}
       />
 
       {/* Bottom tab bar — mobile only */}

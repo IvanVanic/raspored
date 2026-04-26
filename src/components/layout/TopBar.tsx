@@ -29,6 +29,8 @@ export function TopBar({
   year: string;
   onWeekBadgeTap: () => void;
 }) {
+  const displayedWeek = view === "raspored" ? viewingWeek : currentWeek;
+
   return (
     <header
       className="sticky top-0 z-10 bg-background/85 backdrop-blur-xl border-b border-border"
@@ -106,7 +108,7 @@ export function TopBar({
               <button
                 onClick={onWeekBadgeTap}
                 className={`week-badge cursor-pointer hover:opacity-80 t-fast transition-opacity gap-1.5 ${
-                  viewingWeek !== currentWeek ? "opacity-60" : ""
+                  view === "raspored" && viewingWeek !== currentWeek ? "opacity-60" : ""
                 }`}
               >
                 <svg
@@ -124,7 +126,7 @@ export function TopBar({
                   <path d="M4.5 1v2.5M9.5 1v2.5M1.5 5.5h11" />
                   <path d="M1.5 8h11" opacity="0.4" />
                 </svg>
-                T{viewingWeek}/15
+                T{displayedWeek}/15
               </button>
 
               {view === "raspored" && (
